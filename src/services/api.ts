@@ -10,6 +10,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // This allows credentials (cookies, authorization headers) to be included in requests
+  withCredentials: true,
 });
 
 // Add token to requests
