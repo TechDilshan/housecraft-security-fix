@@ -15,6 +15,8 @@ import SignupPage from "./pages/SignupPage";
 import UserRequestsPage from "./pages/UserRequestsPage";
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import AddHousePage from "./pages/AddHousePage";
+import EditHousePage from "./pages/EditHousePage";
 import ChatPage from "./pages/ChatPage";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +40,8 @@ const App = () => (
             <Route path="/architect-dashboard" element={<ProfessionalDashboard />} />
             <Route path="/vastu-dashboard" element={<ProfessionalDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/add-house" element={<AddHousePage />} />
+            <Route path="/admin/edit-house/:id" element={<EditHousePage />} />
             <Route path="/chat/:id" element={<ChatPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
