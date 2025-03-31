@@ -107,7 +107,8 @@ export const deleteHouse = async (req, res) => {
       return res.status(404).json({ message: 'House not found' });
     }
 
-    await house.remove();
+    // Update to use findByIdAndDelete instead of remove() which is deprecated
+    await House.findByIdAndDelete(req.params.id);
     res.json({ message: 'House removed' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
