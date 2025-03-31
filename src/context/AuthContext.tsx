@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string, role: UserRole) => Promise<void>;
-  signup: (userData: Omit<User, 'id'>) => Promise<void>;
+  signup: (userData: Omit<User, 'id'>, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -94,7 +94,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (userData: Omit<User, 'id'>) => {
+  // Updated signup function to accept password as a separate parameter
+  const signup = async (userData: Omit<User, 'id'>, password: string) => {
     setLoading(true);
     try {
       // Simulate API call delay
@@ -111,7 +112,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: `user-${Date.now()}`
       };
       
-      // In a real app, you would save this to a database
+      // In a real app, you would save this to a database along with the password
+      // For this demo, we're not actually storing the password since it's mock data
       MOCK_USERS.push(newUser);
       
       // Save user to localStorage

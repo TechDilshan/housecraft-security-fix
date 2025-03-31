@@ -30,13 +30,13 @@ const SignupForm = () => {
     setIsLoading(true);
     
     try {
+      // Pass user data and password as separate parameters
       await signup({
         fullName,
         email,
         phoneNumber,
-        role: 'user',
-        password
-      });
+        role: 'user'
+      }, password);
       
       navigate('/');
       
