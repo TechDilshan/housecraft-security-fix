@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -94,9 +93,8 @@ const UserRequestsPage = () => {
       ) : (
         requests.map(request => {
           const sortedMessages = [...request.messages].sort((a, b) => {
-            // Convert timestamps to numbers for comparison, regardless of their type
-            const timeA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp.getTime();
-            const timeB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp.getTime();
+            const timeA = new Date(a.timestamp).getTime();
+            const timeB = new Date(b.timestamp).getTime();
             return timeA - timeB;
           });
           
