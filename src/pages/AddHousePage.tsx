@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -35,6 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ArrowLeft } from 'lucide-react';
+import { House } from '@/types';
 
 // Form validation schema
 const formSchema = z.object({
@@ -75,10 +75,16 @@ const AddHousePage = () => {
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      // Convert price string to number
-      const houseData = {
-        ...values,
+      // Create a properly typed house object
+      // All fields from the form are required since they're validated by zod
+      const houseData: Omit<House, 'id'> = {
+        title: values.title,
+        description: values.description,
+        location: values.location,
         price: Number(values.price),
+        houseType: values.houseType,
+        images: values.images,
+        available: values.available,
       };
 
       await createHouse(houseData);
