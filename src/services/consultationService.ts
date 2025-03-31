@@ -21,14 +21,20 @@ export const createConsultationRequest = async (
 };
 
 // Get consultation by ID
-export const getConsultationById = async (id: string) => {
-  const response = await api.get(`/consultations/${id}`);
-  return response.data;
+export const getConsultationById = async (_id: string) => {
+  try {
+    const response = await api.get(`/consultations/${_id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching consultation:', error.response?.data || error.message);
+    throw error;
+  }
 };
+
 
 // Get consultations by current user
 export const getConsultationsByUser = async (userId) => {
-  const response = await api.get(`/consultations/${userId}`);
+  const response = await api.get(`/consultations/user/${userId}`);
   return response.data;
 };
 

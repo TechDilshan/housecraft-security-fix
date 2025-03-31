@@ -1,9 +1,9 @@
 import express from 'express';
 import { 
   createConsultation,
-  getConsultations,
   getConsultationById,
   getConsultationsByProfessional,
+  getConsultationsByUser,
   addMessage,
   updateConsultation
 } from '../controllers/consultationController.js';
@@ -17,15 +17,17 @@ router.use(protect);
 // User routes
 router.route('/')
   .post(createConsultation)
-  .get(getConsultations);
 
 router.route('/:id')
-  .get(getConsultations)
+  .get(getConsultationById)
   .put(updateConsultation);
 
 router.post('/:id/messages', addMessage);
 
+// User routes
+router.get('/user/:userId', getConsultationsByUser);
+
 // Professional routes
-router.get('/professional/me', professional, getConsultationsByProfessional);
+router.get('/professional/:userId', professional, getConsultationsByProfessional);
 
 export default router;

@@ -42,7 +42,7 @@ const App = () => (
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/add-house" element={<AddHousePage />} />
             <Route path="/admin/edit-house/:id" element={<EditHousePage />} />
-            <Route path="/chat/:id" element={<ChatPage />} />
+            <Route path="/chat/:_id" element={<ChatPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
