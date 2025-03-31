@@ -1,23 +1,31 @@
-
-const express = require('express');
-const { 
+import express from 'express';
+import { 
   createConsultation,
+  getConsultations,
   getConsultationById,
-  getConsultationsByUser,
   getConsultationsByProfessional,
   addMessage,
-  updateConsultationStatus
-} = require('../controllers/consultationController');
-const { protect, professional } = require('../middleware/authMiddleware');
+  updateConsultation
+} from '../controllers/consultationController.js';
+import { protect, professional } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // All routes are protected
-router.post('/', protect, createConsultation);
-router.get('/:id', protect, getConsultationById);
-router.get('/user/me', protect, getConsultationsByUser);
-router.get('/professional/me', protect, professional, getConsultationsByProfessional);
-router.post('/:id/messages', protect, addMessage);
-router.put('/:id/status', protect, professional, updateConsultationStatus);
+router.use(protect);
 
-module.exports = router;
+// User routes
+router.route('/')
+  .post(createConsultation)
+  .get(getConsultations);
+
+router.route('/:id')
+  .get(getConsultationById)
+  .put(updateConsultation);
+
+router.post('/:id/messages', addMessage);
+
+// Professional routes
+router.get('/professional/me', professional, getConsultationsByProfessional);
+
+export default router;

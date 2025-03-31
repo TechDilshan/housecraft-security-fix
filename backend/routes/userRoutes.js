@@ -1,19 +1,22 @@
-
-const express = require('express');
-const { 
-  getProfessionals,
+import express from 'express';
+import {
+  updateProfile,
+  getAllUsers,
   getUserById,
-  updateProfile
-} = require('../controllers/userController');
-const { protect } = require('../middleware/authMiddleware');
+  deleteUser
+} from '../controllers/userController.js';
+import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Get professionals by role (public)
-router.get('/professionals/:role', getProfessionals);
-
 // Protected routes
-router.get('/:id', protect, getUserById);
-router.put('/profile', protect, updateProfile);
+router.use(protect);
+router.put('/profile', updateProfile);
 
-module.exports = router;
+// Admin only routes
+router.use(admin);
+router.get('/', getAllUsers);
+router.get('/:id', getUserById);
+router.delete('/:id', deleteUser);
+
+export default router;

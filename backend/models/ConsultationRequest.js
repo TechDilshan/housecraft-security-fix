@@ -1,5 +1,4 @@
-
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const messageSchema = new mongoose.Schema({
   senderId: {
@@ -58,6 +57,4 @@ const consultationRequestSchema = new mongoose.Schema({
   }
 });
 
-const ConsultationRequest = mongoose.model('ConsultationRequest', consultationRequestSchema);
-
-module.exports = ConsultationRequest;
+export const ConsultationRequest = mongoose.model('ConsultationRequest', consultationRequestSchema);

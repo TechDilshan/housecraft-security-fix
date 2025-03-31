@@ -1,8 +1,7 @@
+import jwt from 'jsonwebtoken';
+import { User } from '../models/User.js';
 
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-
-exports.protect = async (req, res, next) => {
+export const protect = async (req, res, next) => {
   let token;
   
   // Check if token exists in header
@@ -33,7 +32,7 @@ exports.protect = async (req, res, next) => {
 };
 
 // Middleware to check if user is admin
-exports.admin = (req, res, next) => {
+export const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
@@ -42,7 +41,7 @@ exports.admin = (req, res, next) => {
 };
 
 // Middleware to check if user is professional (engineer, architect, or vastu)
-exports.professional = (req, res, next) => {
+export const professional = (req, res, next) => {
   if (req.user && ['engineer', 'architect', 'vastu'].includes(req.user.role)) {
     next();
   } else {

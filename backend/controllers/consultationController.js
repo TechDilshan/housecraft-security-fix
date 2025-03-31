@@ -1,10 +1,9 @@
-
-const ConsultationRequest = require('../models/ConsultationRequest');
-const User = require('../models/User');
-const mongoose = require('mongoose');
+import { ConsultationRequest } from '../models/ConsultationRequest.js';
+import { User } from '../models/User.js';
+import mongoose from 'mongoose';
 
 // Create consultation request
-exports.createConsultation = async (req, res) => {
+export const createConsultation = async (req, res) => {
   try {
     const { professionalId, consultationType, houseId, message } = req.body;
 
@@ -39,7 +38,7 @@ exports.createConsultation = async (req, res) => {
 };
 
 // Get consultation by ID
-exports.getConsultationById = async (req, res) => {
+export const getConsultationById = async (req, res) => {
   try {
     const consultation = await ConsultationRequest.findById(req.params.id)
       .populate('userId', 'fullName email profileImage')
@@ -65,7 +64,7 @@ exports.getConsultationById = async (req, res) => {
 };
 
 // Get consultations by user
-exports.getConsultationsByUser = async (req, res) => {
+export const getConsultations = async (req, res) => {
   try {
     const consultations = await ConsultationRequest.find({ userId: req.user._id })
       .populate('professionalId', 'fullName email profileImage degree role')
@@ -79,7 +78,7 @@ exports.getConsultationsByUser = async (req, res) => {
 };
 
 // Get consultations by professional
-exports.getConsultationsByProfessional = async (req, res) => {
+export const getConsultationsByProfessional = async (req, res) => {
   try {
     const consultations = await ConsultationRequest.find({ professionalId: req.user._id })
       .populate('userId', 'fullName email profileImage')
@@ -93,7 +92,7 @@ exports.getConsultationsByProfessional = async (req, res) => {
 };
 
 // Add message to consultation
-exports.addMessage = async (req, res) => {
+export const addMessage = async (req, res) => {
   try {
     const { content, recipientId } = req.body;
     const senderId = req.user._id;
@@ -130,7 +129,7 @@ exports.addMessage = async (req, res) => {
 };
 
 // Update consultation status
-exports.updateConsultationStatus = async (req, res) => {
+export const updateConsultation = async (req, res) => {
   try {
     const { status } = req.body;
     

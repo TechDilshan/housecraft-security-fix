@@ -1,18 +1,17 @@
-
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const authRoutes = require('./routes/authRoutes');
-const houseRoutes = require('./routes/houseRoutes');
-const consultationRoutes = require('./routes/consultationRoutes');
-const userRoutes = require('./routes/userRoutes');
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import authRoutes from './routes/authRoutes.js';
+import houseRoutes from './routes/houseRoutes.js';
+import consultationRoutes from './routes/consultationRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // CORS configuration - allow requests from all origins during development
 app.use(cors({

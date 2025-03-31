@@ -1,8 +1,7 @@
-
-const House = require('../models/House');
+import { House } from '../models/House.js';
 
 // Get all houses
-exports.getHouses = async (req, res) => {
+export const getHouses = async (req, res) => {
   try {
     // Parse filters from query params
     const filters = {};
@@ -23,7 +22,7 @@ exports.getHouses = async (req, res) => {
 };
 
 // Get house by ID
-exports.getHouseById = async (req, res) => {
+export const getHouseById = async (req, res) => {
   try {
     const house = await House.findById(req.params.id);
     if (!house) {
@@ -36,7 +35,7 @@ exports.getHouseById = async (req, res) => {
 };
 
 // Create new house (admin only)
-exports.createHouse = async (req, res) => {
+export const createHouse = async (req, res) => {
   try {
     const {
       title,
@@ -65,7 +64,7 @@ exports.createHouse = async (req, res) => {
 };
 
 // Update house (admin only)
-exports.updateHouse = async (req, res) => {
+export const updateHouse = async (req, res) => {
   try {
     const {
       title,
@@ -101,7 +100,7 @@ exports.updateHouse = async (req, res) => {
 };
 
 // Delete house (admin only)
-exports.deleteHouse = async (req, res) => {
+export const deleteHouse = async (req, res) => {
   try {
     const house = await House.findById(req.params.id);
     if (!house) {

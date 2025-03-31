@@ -1,13 +1,12 @@
-
-const express = require('express');
-const { 
-  getHouses, 
-  getHouseById, 
-  createHouse, 
-  updateHouse, 
-  deleteHouse 
-} = require('../controllers/houseController');
-const { protect, admin } = require('../middleware/authMiddleware');
+import express from 'express';
+import {
+  createHouse,
+  getHouses,
+  getHouseById,
+  updateHouse,
+  deleteHouse
+} from '../controllers/houseController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -15,9 +14,10 @@ const router = express.Router();
 router.get('/', getHouses);
 router.get('/:id', getHouseById);
 
-// Protected admin-only routes
-router.post('/', protect, admin, createHouse);
-router.put('/:id', protect, admin, updateHouse);
-router.delete('/:id', protect, admin, deleteHouse);
+// Protected routes
+router.use(protect);
+router.post('/', createHouse);
+router.put('/:id', updateHouse);
+router.delete('/:id', deleteHouse);
 
-module.exports = router;
+export default router;

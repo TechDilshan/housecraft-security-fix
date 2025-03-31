@@ -1,8 +1,17 @@
+import { User } from '../models/User.js';
 
-const User = require('../models/User');
+// Get all users (admin only)
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 
 // Get professionals by role
-exports.getProfessionals = async (req, res) => {
+export const getProfessionals = async (req, res) => {
   try {
     const { role } = req.params;
     
@@ -22,7 +31,7 @@ exports.getProfessionals = async (req, res) => {
 };
 
 // Get user by ID
-exports.getUserById = async (req, res) => {
+export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     
@@ -37,7 +46,7 @@ exports.getUserById = async (req, res) => {
 };
 
 // Update user profile
-exports.updateProfile = async (req, res) => {
+export const updateProfile = async (req, res) => {
   try {
     const { fullName, phoneNumber, profileImage, degree } = req.body;
     
@@ -63,6 +72,22 @@ exports.updateProfile = async (req, res) => {
       profileImage: updatedUser.profileImage,
       degree: updatedUser.degree
     });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Delete user (admin only)
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await User.deleteOne({ _id: user._id });
+    res.json({ message: 'User removed' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

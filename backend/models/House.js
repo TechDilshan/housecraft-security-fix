@@ -1,5 +1,4 @@
-
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const houseSchema = new mongoose.Schema({
   title: {
@@ -43,6 +42,4 @@ const houseSchema = new mongoose.Schema({
   }
 });
 
-const House = mongoose.model('House', houseSchema);
-
-module.exports = House;
+export const House = mongoose.model('House', houseSchema);
