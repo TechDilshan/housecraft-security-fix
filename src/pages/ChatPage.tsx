@@ -48,37 +48,55 @@ const ChatPage = () => {
   
   const [consultation, setConsultation] = useState<ConsultationRequest | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
   
-  useEffect(() => {
+  const fetchConsultation = async () => {
     if (!user || !id) return;
     
-    const fetchConsultation = async () => {
-      try {
-        const consultationData = await getConsultationById(id);
-        setConsultation(consultationData);
-      } catch (error) {
-        console.error('Error fetching consultation:', error);
-        toast({
-          title: 'Error',
-          description: 'Could not load chat data',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
+    try {
+      const consultationData = await getConsultationById(id);
+      setConsultation(consultationData);
+    } catch (error) {
+      console.error('Error fetching consultation:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not load chat data',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    fetchConsultation();
+    
+    // Set up auto-refresh for messages every 5 seconds
+    const interval = setInterval(() => {
+      fetchConsultation();
+    }, 5000);
+    
+    setRefreshInterval(interval);
+    
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
       }
     };
-    
-    fetchConsultation();
-  }, [id, user, toast]);
+  }, [id, user]); // eslint-disable-line react-hooks/exhaustive-deps
   
   const handleSendMessage = async (content: string) => {
     if (!user || !consultation) return;
     
     try {
+      const recipientId = user.id === consultation.userId 
+        ? consultation.professionalId 
+        : consultation.userId;
+      
       const newMessage = await addMessageToConsultation(
         consultation.id,
         user.id,
-        consultation.professionalId,
+        recipientId,
         content
       );
       
@@ -86,6 +104,10 @@ const ChatPage = () => {
         ...consultation,
         messages: [...consultation.messages, newMessage],
       });
+      
+      // Fetch the latest messages after sending to ensure we have any responses
+      setTimeout(fetchConsultation, 1000);
+      
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -143,6 +165,11 @@ const ChatPage = () => {
   const returnPath = user.role === 'user' 
     ? '/my-requests' 
     : `/${user.role}-dashboard`;
+    
+  // Sort messages by timestamp to ensure chronological order
+  const sortedMessages = [...consultation.messages].sort((a, b) => 
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -158,7 +185,7 @@ const ChatPage = () => {
           </div>
           
           <ChatInterface
-            messages={consultation.messages}
+            messages={sortedMessages}
             currentUser={user}
             professional={professional}
             onSendMessage={handleSendMessage}

@@ -74,6 +74,11 @@ const UserRequestsPage = () => {
     };
     
     fetchRequests();
+    
+    // Set up auto-refresh for messages every 10 seconds
+    const interval = setInterval(fetchRequests, 10000);
+    
+    return () => clearInterval(interval);
   }, [user]);
   
   if (!user) {
@@ -90,9 +95,14 @@ const UserRequestsPage = () => {
         <p className="text-muted-foreground text-center py-8">No consultation requests found in this category.</p>
       ) : (
         requests.map(request => {
+          // Sort messages by timestamp to get proper chronological order
+          const sortedMessages = [...request.messages].sort((a, b) => 
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+          
           // Get the latest message for display
-          const latestMessage = request.messages.length > 0 
-            ? request.messages[request.messages.length - 1] 
+          const latestMessage = sortedMessages.length > 0 
+            ? sortedMessages[sortedMessages.length - 1] 
             : null;
             
           // Check if the latest message is from the professional
@@ -126,14 +136,26 @@ const UserRequestsPage = () => {
               <CardContent>
                 <div className="mb-4">
                   {latestMessage ? (
-                    <div>
+                    <div className="p-3 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-2 mb-1">
+                        <Avatar className="h-6 w-6">
+                          {isFromProfessional ? (
+                            <>
+                              <AvatarImage src={PROFESSIONALS[request.professionalId]?.profileImage} />
+                              <AvatarFallback>
+                                {PROFESSIONALS[request.professionalId]?.fullName.substring(0, 2) || 'P'}
+                              </AvatarFallback>
+                            </>
+                          ) : (
+                            <AvatarFallback>You</AvatarFallback>
+                          )}
+                        </Avatar>
                         <span className="text-xs font-medium">
                           {isFromProfessional ? 
-                            `${PROFESSIONALS[request.professionalId]?.fullName} replied:` : 
-                            'You wrote:'}
+                            `${PROFESSIONALS[request.professionalId]?.fullName}:` : 
+                            'You:'}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground ml-auto">
                           {latestMessage.timestamp instanceof Date ? 
                             format(latestMessage.timestamp, 'MMM d, h:mm a') : 
                             format(new Date(latestMessage.timestamp), 'MMM d, h:mm a')}

@@ -61,27 +61,47 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </p>
           </div>
         ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${
-                message.senderId === currentUser.id ? 'justify-end' : 'justify-start'
-              }`}
-            >
+          messages.map((message) => {
+            const isCurrentUser = message.senderId === currentUser.id;
+            const sender = isCurrentUser ? currentUser : professional;
+            
+            return (
               <div
-                className={`max-w-[75%] p-3 rounded-lg ${
-                  message.senderId === currentUser.id
-                    ? 'bg-accent text-accent-foreground'
-                    : 'bg-muted'
-                }`}
+                key={message.id}
+                className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
               >
-                <p className="text-sm">{message.content}</p>
-                <p className="text-xs mt-1 opacity-70">
-                  {format(new Date(message.timestamp), 'h:mm a, MMM d')}
-                </p>
+                {!isCurrentUser && (
+                  <Avatar className="h-8 w-8 mr-2 mt-1">
+                    <AvatarImage src={professional.profileImage} />
+                    <AvatarFallback>{professional.fullName.substring(0, 2)}</AvatarFallback>
+                  </Avatar>
+                )}
+                <div
+                  className={`max-w-[75%] p-3 rounded-lg ${
+                    isCurrentUser
+                      ? 'bg-accent text-accent-foreground'
+                      : 'bg-muted'
+                  }`}
+                >
+                  <p className="text-sm">{message.content}</p>
+                  <div className="flex justify-between items-center mt-1">
+                    <p className="text-xs opacity-70">
+                      {format(new Date(message.timestamp), 'h:mm a, MMM d')}
+                    </p>
+                    <p className="text-xs opacity-70 ml-2">
+                      {isCurrentUser ? 'You' : sender.fullName}
+                    </p>
+                  </div>
+                </div>
+                {isCurrentUser && (
+                  <Avatar className="h-8 w-8 ml-2 mt-1">
+                    <AvatarImage src={currentUser.profileImage} />
+                    <AvatarFallback>{currentUser.fullName.substring(0, 2)}</AvatarFallback>
+                  </Avatar>
+                )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </CardContent>
