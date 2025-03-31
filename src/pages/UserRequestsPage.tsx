@@ -89,46 +89,74 @@ const UserRequestsPage = () => {
       {requests.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">No consultation requests found in this category.</p>
       ) : (
-        requests.map(request => (
-          <Card key={request.id} className="shadow-sm hover:shadow-md transition-shadow duration-300">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={PROFESSIONALS[request.professionalId]?.profileImage} />
-                    <AvatarFallback>
-                      {PROFESSIONALS[request.professionalId]?.fullName.substring(0, 2) || 'NA'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {PROFESSIONALS[request.professionalId]?.fullName || 'Professional'}
-                    </CardTitle>
-                    <CardDescription className="capitalize">
-                      {PROFESSIONALS[request.professionalId]?.role || request.requestType}
-                    </CardDescription>
+        requests.map(request => {
+          // Get the latest message for display
+          const latestMessage = request.messages.length > 0 
+            ? request.messages[request.messages.length - 1] 
+            : null;
+            
+          // Check if the latest message is from the professional
+          const isFromProfessional = latestMessage && latestMessage.senderId === request.professionalId;
+          
+          return (
+            <Card key={request.id} className="shadow-sm hover:shadow-md transition-shadow duration-300">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={PROFESSIONALS[request.professionalId]?.profileImage} />
+                      <AvatarFallback>
+                        {PROFESSIONALS[request.professionalId]?.fullName.substring(0, 2) || 'NA'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-lg">
+                        {PROFESSIONALS[request.professionalId]?.fullName || 'Professional'}
+                      </CardTitle>
+                      <CardDescription className="capitalize">
+                        {PROFESSIONALS[request.professionalId]?.role || request.requestType}
+                      </CardDescription>
+                    </div>
                   </div>
+                  <span className="text-xs px-2 py-1 rounded-full bg-secondary">
+                    {format(new Date(request.createdAt), 'MMM d, yyyy')}
+                  </span>
                 </div>
-                <span className="text-xs px-2 py-1 rounded-full bg-secondary">
-                  {format(new Date(request.createdAt), 'MMM d, yyyy')}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {request.messages[0]?.content || 'No message content'}
-                </p>
-              </div>
-              <Link to={`/chat/${request.id}`}>
-                <Button variant="outline" className="w-full flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  View Conversation
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ))
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  {latestMessage ? (
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium">
+                          {isFromProfessional ? 
+                            `${PROFESSIONALS[request.professionalId]?.fullName} replied:` : 
+                            'You wrote:'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {latestMessage.timestamp instanceof Date ? 
+                            format(latestMessage.timestamp, 'MMM d, h:mm a') : 
+                            format(new Date(latestMessage.timestamp), 'MMM d, h:mm a')}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {latestMessage.content}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No messages in this conversation yet.</p>
+                  )}
+                </div>
+                <Link to={`/chat/${request.id}`}>
+                  <Button variant="outline" className="w-full flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    View Conversation
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          );
+        })
       )}
     </div>
   );
