@@ -1,195 +1,61 @@
 
-import { ConsultationRequest, ChatMessage, UserRole } from '@/types';
+import api from './api';
+import { ConsultationRequest, ChatMessage } from '@/types';
 
-// Mock consultation requests for the demo
-const CONSULTATION_REQUESTS: ConsultationRequest[] = [
-  {
-    id: '1',
-    userId: '1',
-    professionalId: '2',
-    houseId: '3',
-    requestType: 'engineer',
-    status: 'pending',
-    messages: [
-      {
-        id: 'm1',
-        senderId: '1',
-        recipientId: '2',
-        content: 'Hello, I\'m interested in building a similar house to the one that was sold. Can you help?',
-        timestamp: new Date('2023-09-15T10:00:00')
-      }
-    ],
-    createdAt: new Date('2023-09-15T10:00:00')
-  },
-  {
-    id: '2',
-    userId: '1',
-    professionalId: '3',
-    requestType: 'architect',
-    status: 'accepted',
-    messages: [
-      {
-        id: 'm2',
-        senderId: '1',
-        recipientId: '3',
-        content: 'I need help with designing a custom house. Are you available?',
-        timestamp: new Date('2023-09-10T14:30:00')
-      },
-      {
-        id: 'm3',
-        senderId: '3',
-        recipientId: '1',
-        content: 'Yes, I\'d be happy to help! What kind of design are you looking for?',
-        timestamp: new Date('2023-09-10T15:00:00')
-      }
-    ],
-    createdAt: new Date('2023-09-10T14:30:00')
-  },
-  {
-    id: '3',
-    userId: '1',
-    professionalId: '4',
-    houseId: '1',
-    requestType: 'vastu',
-    status: 'completed',
-    messages: [
-      {
-        id: 'm4',
-        senderId: '1',
-        recipientId: '4',
-        content: 'Could you provide some vastu advice for the house I\'m interested in?',
-        timestamp: new Date('2023-09-05T09:15:00')
-      },
-      {
-        id: 'm5',
-        senderId: '4',
-        recipientId: '1',
-        content: 'Of course! I\'ve reviewed the plans and have some recommendations for you.',
-        timestamp: new Date('2023-09-05T10:00:00')
-      },
-      {
-        id: 'm6',
-        senderId: '1',
-        recipientId: '4',
-        content: 'Thank you! That\'s very helpful.',
-        timestamp: new Date('2023-09-05T10:30:00')
-      }
-    ],
-    createdAt: new Date('2023-09-05T09:15:00')
-  }
-];
-
+// Create consultation request
 export const createConsultationRequest = async (
-  userId: string,
   professionalId: string,
-  requestType: 'engineer' | 'architect' | 'vastu',
-  houseId?: string,
-  initialMessage?: string
+  consultationType: 'engineer' | 'architect' | 'vastu',
+  houseId: string | null,
+  message: string
 ) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const messages: ChatMessage[] = [];
-  
-  if (initialMessage) {
-    messages.push({
-      id: `msg-${Date.now()}`,
-      senderId: userId,
-      recipientId: professionalId,
-      content: initialMessage,
-      timestamp: new Date()
-    });
-  }
-  
-  const newRequest: ConsultationRequest = {
-    id: `req-${Date.now()}`,
-    userId,
+  const response = await api.post('/consultations', {
     professionalId,
+    consultationType,
     houseId,
-    requestType,
-    status: 'pending',
-    messages,
-    createdAt: new Date()
-  };
-  
-  CONSULTATION_REQUESTS.push(newRequest);
-  
-  return newRequest;
+    message
+  });
+  return response.data;
 };
 
-export const getConsultationsByUser = async (userId: string) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  return CONSULTATION_REQUESTS.filter(request => request.userId === userId);
-};
-
-export const getConsultationsByProfessional = async (professionalId: string) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  return CONSULTATION_REQUESTS.filter(request => request.professionalId === professionalId);
-};
-
+// Get consultation by ID
 export const getConsultationById = async (id: string) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  const consultation = CONSULTATION_REQUESTS.find(request => request.id === id);
-  
-  if (!consultation) {
-    throw new Error('Consultation request not found');
-  }
-  
-  return consultation;
+  const response = await api.get(`/consultations/${id}`);
+  return response.data;
 };
 
+// Get consultations by current user
+export const getConsultationsByUser = async () => {
+  const response = await api.get('/consultations/user/me');
+  return response.data;
+};
+
+// Get consultations by professional
+export const getConsultationsByProfessional = async () => {
+  const response = await api.get('/consultations/professional/me');
+  return response.data;
+};
+
+// Add message to consultation
 export const addMessageToConsultation = async (
   consultationId: string,
-  senderId: string,
   recipientId: string,
   content: string
 ) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const consultationIndex = CONSULTATION_REQUESTS.findIndex(
-    request => request.id === consultationId
-  );
-  
-  if (consultationIndex === -1) {
-    throw new Error('Consultation request not found');
-  }
-  
-  const newMessage: ChatMessage = {
-    id: `msg-${Date.now()}`,
-    senderId,
+  const response = await api.post(`/consultations/${consultationId}/messages`, {
     recipientId,
-    content,
-    timestamp: new Date()
-  };
-  
-  CONSULTATION_REQUESTS[consultationIndex].messages.push(newMessage);
-  
-  return newMessage;
+    content
+  });
+  return response.data;
 };
 
+// Update consultation status
 export const updateConsultationStatus = async (
   consultationId: string,
-  status: 'pending' | 'accepted' | 'completed'
+  status: 'pending' | 'accepted' | 'completed' | 'rejected'
 ) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const consultationIndex = CONSULTATION_REQUESTS.findIndex(
-    request => request.id === consultationId
-  );
-  
-  if (consultationIndex === -1) {
-    throw new Error('Consultation request not found');
-  }
-  
-  CONSULTATION_REQUESTS[consultationIndex].status = status;
-  
-  return CONSULTATION_REQUESTS[consultationIndex];
+  const response = await api.put(`/consultations/${consultationId}/status`, {
+    status
+  });
+  return response.data;
 };
