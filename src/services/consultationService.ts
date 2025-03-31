@@ -4,12 +4,14 @@ import { ConsultationRequest, ChatMessage } from '@/types';
 
 // Create consultation request
 export const createConsultationRequest = async (
+  userId: string,
   professionalId: string,
   consultationType: 'engineer' | 'architect' | 'vastu',
-  houseId: string | null,
-  message: string
+  houseId?: string,
+  message?: string
 ) => {
   const response = await api.post('/consultations', {
+    userId,
     professionalId,
     consultationType,
     houseId,
@@ -39,10 +41,12 @@ export const getConsultationsByProfessional = async () => {
 // Add message to consultation
 export const addMessageToConsultation = async (
   consultationId: string,
+  senderId: string,
   recipientId: string,
   content: string
 ) => {
   const response = await api.post(`/consultations/${consultationId}/messages`, {
+    senderId,
     recipientId,
     content
   });

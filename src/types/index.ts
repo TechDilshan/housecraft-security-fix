@@ -1,3 +1,4 @@
+
 export type UserRole = 'user' | 'engineer' | 'architect' | 'vastu' | 'admin';
 
 export interface User {
@@ -27,7 +28,7 @@ export interface ChatMessage {
   senderId: string;
   recipientId: string;
   content: string;
-  timestamp: Date;
+  timestamp: Date | string;
 }
 
 export interface ConsultationRequest {
@@ -35,8 +36,9 @@ export interface ConsultationRequest {
   userId: string;
   professionalId: string;
   houseId?: string;
-  requestType: 'engineer' | 'architect' | 'vastu';
-  status: 'pending' | 'accepted' | 'completed';
+  consultationType: 'engineer' | 'architect' | 'vastu';
+  status: 'pending' | 'accepted' | 'completed' | 'rejected';
   messages: ChatMessage[];
-  createdAt: Date;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
 }

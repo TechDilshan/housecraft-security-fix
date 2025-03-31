@@ -47,7 +47,7 @@ const ProfessionalDashboard = () => {
     
     const fetchRequests = async () => {
       try {
-        const professionalRequests = await getConsultationsByProfessional(user.id);
+        const professionalRequests = await getConsultationsByProfessional();
         setRequests(professionalRequests);
       } catch (error) {
         console.error('Error fetching consultation requests:', error);

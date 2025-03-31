@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -23,7 +22,6 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { MessageSquare } from 'lucide-react';
 
-// Mock professional user data for the demo
 const PROFESSIONALS: Record<string, User> = {
   '2': {
     id: '2',
@@ -64,7 +62,7 @@ const UserRequestsPage = () => {
     
     const fetchRequests = async () => {
       try {
-        const userRequests = await getConsultationsByUser(user.id);
+        const userRequests = await getConsultationsByUser();
         setRequests(userRequests);
       } catch (error) {
         console.error('Error fetching consultation requests:', error);
@@ -75,7 +73,6 @@ const UserRequestsPage = () => {
     
     fetchRequests();
     
-    // Set up auto-refresh for messages every 10 seconds
     const interval = setInterval(fetchRequests, 10000);
     
     return () => clearInterval(interval);
@@ -95,17 +92,16 @@ const UserRequestsPage = () => {
         <p className="text-muted-foreground text-center py-8">No consultation requests found in this category.</p>
       ) : (
         requests.map(request => {
-          // Sort messages by timestamp to get proper chronological order
-          const sortedMessages = [...request.messages].sort((a, b) => 
-            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          );
+          const sortedMessages = [...request.messages].sort((a, b) => {
+            const timeA = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+            const timeB = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+            return timeA - timeB;
+          });
           
-          // Get the latest message for display
           const latestMessage = sortedMessages.length > 0 
             ? sortedMessages[sortedMessages.length - 1] 
             : null;
             
-          // Check if the latest message is from the professional
           const isFromProfessional = latestMessage && latestMessage.senderId === request.professionalId;
           
           return (
@@ -124,7 +120,7 @@ const UserRequestsPage = () => {
                         {PROFESSIONALS[request.professionalId]?.fullName || 'Professional'}
                       </CardTitle>
                       <CardDescription className="capitalize">
-                        {PROFESSIONALS[request.professionalId]?.role || request.requestType}
+                        {PROFESSIONALS[request.professionalId]?.role || request.consultationType}
                       </CardDescription>
                     </div>
                   </div>
@@ -156,9 +152,7 @@ const UserRequestsPage = () => {
                             'You:'}
                         </span>
                         <span className="text-xs text-muted-foreground ml-auto">
-                          {latestMessage.timestamp instanceof Date ? 
-                            format(latestMessage.timestamp, 'MMM d, h:mm a') : 
-                            format(new Date(latestMessage.timestamp), 'MMM d, h:mm a')}
+                          {format(new Date(latestMessage.timestamp), 'MMM d, h:mm a')}
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">
