@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -18,6 +19,10 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'sans-serif'],
+				serif: ['Playfair Display', 'serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -61,7 +66,33 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				estate: {
+					'50': '#f7f7f6',
+					'100': '#e9e8e4',
+					'200': '#d3d1c9',
+					'300': '#b8b5a8',
+					'400': '#98937f',
+					'500': '#807a65',
+					'600': '#6d6655',
+					'700': '#5a5446',
+					'800': '#4d473c',
+					'900': '#433e35',
+					'950': '#272320',
+				},
+				terracotta: {
+					'50': '#fcf5f3',
+					'100': '#f8e8e2',
+					'200': '#f2d2c6',
+					'300': '#e8b2a0',
+					'400': '#dd8871',
+					'500': '#d0684f',
+					'600': '#c24e37',
+					'700': '#a1382b',
+					'800': '#833228',
+					'900': '#6c2c25',
+					'950': '#3a1512',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +115,22 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
 			}
 		}
 	},
