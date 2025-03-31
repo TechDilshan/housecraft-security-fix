@@ -1,4 +1,3 @@
-
 export type UserRole = 'user' | 'engineer' | 'architect' | 'vastu' | 'admin';
 
 export interface User {
@@ -9,6 +8,7 @@ export interface User {
   role: UserRole;
   profileImage?: string;
   degree?: string;
+  _password?: string; // Added password property with optional modifier
 }
 
 export interface House {
