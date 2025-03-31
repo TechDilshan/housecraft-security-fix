@@ -63,7 +63,6 @@ export const getConsultationById = async (req, res) => {
 
 // Get consultations by user
 export const getConsultations = async (req, res) => {
-  console.log(req.user._id)
   try {
     const consultations = await ConsultationRequest.find({ userId: req.user._id })
       .populate('professionalId', 'fullName email profileImage degree role')

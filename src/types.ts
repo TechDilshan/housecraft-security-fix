@@ -33,7 +33,7 @@ export type ConsultationType = 'engineer' | 'architect' | 'vastu';
 export type ConsultationStatus = 'pending' | 'accepted' | 'completed' | 'rejected';
 
 export interface ChatMessage {
-  id: string;
+  _id: string;
   senderId: string;
   recipientId: string;
   content: string;
@@ -41,7 +41,7 @@ export interface ChatMessage {
 }
 
 export interface ConsultationRequest {
-  id: string;
+  _id: string;
   userId: string;
   professionalId: string;
   consultationType: ConsultationType;

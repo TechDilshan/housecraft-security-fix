@@ -105,7 +105,7 @@ const UserRequestsPage = () => {
           const isFromProfessional = latestMessage && latestMessage.senderId === request.professionalId;
           
           return (
-            <Card key={request.id} className="shadow-sm hover:shadow-md transition-shadow duration-300">
+            <Card key={request._id} className="shadow-sm hover:shadow-md transition-shadow duration-300">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
@@ -163,7 +163,7 @@ const UserRequestsPage = () => {
                     <p className="text-sm text-muted-foreground">No messages in this conversation yet.</p>
                   )}
                 </div>
-                <Link to={`/chat/${request.id}`}>
+                <Link to={`/chat/${request._id}`}>
                   <Button variant="outline" className="w-full flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
                     View Conversation

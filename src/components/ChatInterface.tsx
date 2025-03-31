@@ -67,7 +67,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             
             return (
               <div
-                key={message.id}
+                key={message._id}
                 className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
               >
                 {!isCurrentUser && (
