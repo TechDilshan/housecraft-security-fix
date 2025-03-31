@@ -87,7 +87,7 @@ const HouseDetailPage = () => {
     
     fetchHouse();
   }, [id, toast]);
-  
+
   const handleRequestConsultation = async () => {
     if (!user || !house) return;
     
@@ -122,6 +122,62 @@ const HouseDetailPage = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleContactProfessional = async (type: 'engineer' | 'architect' | 'vastu') => {
+    if (!user || !house) return;
+    
+    setSubmitting(true);
+    
+    try {
+      const professionalId = professionals[type].id;
+      const initialMessage = `Hello, I'm interested in discussing the house "${house.title}" (ID: ${house.id})`;
+      
+      const consultationRequest = await createConsultationRequest(
+        user.id,
+        professionalId,
+        type,
+        house.id,
+        initialMessage
+      );
+      
+      toast({
+        title: 'Chat Started',
+        description: `You are now connected with our ${type}`,
+      });
+      
+      // Navigate to the chat page with the new consultation ID
+      navigate(`/chat/${consultationRequest.id}`);
+    } catch (error) {
+      console.error('Error creating consultation chat:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not connect with professional',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle direct contact with agent (for available houses)
+  const handleContactAgent = () => {
+    if (!user || !house) return;
+    
+    toast({
+      title: 'Agent Contacted',
+      description: 'Our agent will contact you shortly about this property.',
+    });
+  };
+  
+  // Handle house request (for available houses)
+  const handleRequestHouse = () => {
+    if (!user || !house) return;
+    
+    toast({
+      title: 'House Requested',
+      description: 'Your request for this house has been submitted successfully!',
+    });
   };
   
   if (loading) {
@@ -209,9 +265,21 @@ const HouseDetailPage = () => {
                 </div>
                 
                 {house.available ? (
-                  <Button className="w-full mb-4" size="lg">
-                    Contact Agent
-                  </Button>
+                  <>
+                    {user && user.role === 'user' && (
+                      <Button className="w-full mb-4" size="lg" onClick={handleRequestHouse}>
+                        Request This House
+                      </Button>
+                    )}
+                    <Button 
+                      className="w-full mb-4" 
+                      size="lg"
+                      onClick={handleContactAgent}
+                      disabled={!user}
+                    >
+                      Contact Agent
+                    </Button>
+                  </>
                 ) : (
                   <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
@@ -276,37 +344,28 @@ const HouseDetailPage = () => {
                   <Button 
                     variant="outline" 
                     className="w-full" 
-                    onClick={() => {
-                      setConsultationType('engineer');
-                      setOpen(true);
-                    }}
-                    disabled={!user}
+                    onClick={() => handleContactProfessional('engineer')}
+                    disabled={!user || submitting}
                   >
-                    Consult Engineer
+                    {submitting ? 'Connecting...' : 'Consult Engineer'}
                   </Button>
                   
                   <Button 
                     variant="outline" 
                     className="w-full" 
-                    onClick={() => {
-                      setConsultationType('architect');
-                      setOpen(true);
-                    }}
-                    disabled={!user}
+                    onClick={() => handleContactProfessional('architect')}
+                    disabled={!user || submitting}
                   >
-                    Consult Architect
+                    {submitting ? 'Connecting...' : 'Consult Architect'}
                   </Button>
                   
                   <Button 
                     variant="outline" 
                     className="w-full" 
-                    onClick={() => {
-                      setConsultationType('vastu');
-                      setOpen(true);
-                    }}
-                    disabled={!user}
+                    onClick={() => handleContactProfessional('vastu')}
+                    disabled={!user || submitting}
                   >
-                    Vastu Consultation
+                    {submitting ? 'Connecting...' : 'Vastu Consultation'}
                   </Button>
                   
                   {!user && (
