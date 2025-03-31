@@ -20,7 +20,7 @@ router.route('/')
   .get(getConsultations);
 
 router.route('/:id')
-  .get(getConsultationById)
+  .get(getConsultations)
   .put(updateConsultation);
 
 router.post('/:id/messages', addMessage);

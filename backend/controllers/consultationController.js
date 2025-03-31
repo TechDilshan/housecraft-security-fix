@@ -7,20 +7,17 @@ export const createConsultation = async (req, res) => {
   try {
     const { professionalId, consultationType, houseId, message } = req.body;
 
-    // Check if professional exists
-    const professional = await User.findById(professionalId);
-    if (!professional || professional.role !== consultationType) {
-      return res.status(404).json({ message: 'Professional not found' });
-    }
-
+    // Use req.user._id directly since it's already an ObjectId
+    const userId = req.user._id;
+    
     // Create consultation request with initial message
     const consultationRequest = await ConsultationRequest.create({
-      userId: req.user._id,
-      professionalId,
+      userId,
+      professionalId,  // MongoDB will handle the ObjectId conversion
       consultationType,
-      houseId: houseId || null,
+      houseId,         // MongoDB will handle the ObjectId conversion
       messages: [{
-        senderId: req.user._id,
+        senderId: userId,
         recipientId: professionalId,
         content: message
       }]
@@ -33,6 +30,7 @@ export const createConsultation = async (req, res) => {
 
     res.status(201).json(populatedRequest);
   } catch (error) {
+    console.error('Consultation creation error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -65,13 +63,14 @@ export const getConsultationById = async (req, res) => {
 
 // Get consultations by user
 export const getConsultations = async (req, res) => {
+  console.log(req.user._id)
   try {
     const consultations = await ConsultationRequest.find({ userId: req.user._id })
       .populate('professionalId', 'fullName email profileImage degree role')
       .populate('houseId', 'title images')
       .sort({ updatedAt: -1 });
 
-    res.json(consultations);
+    res.status(200).json(consultations);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

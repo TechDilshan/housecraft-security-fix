@@ -27,8 +27,8 @@ export const getConsultationById = async (id: string) => {
 };
 
 // Get consultations by current user
-export const getConsultationsByUser = async () => {
-  const response = await api.get('/consultations/user/me');
+export const getConsultationsByUser = async (userId) => {
+  const response = await api.get(`/consultations/${userId}`);
   return response.data;
 };
 

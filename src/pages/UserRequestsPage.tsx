@@ -24,7 +24,7 @@ import { MessageSquare } from 'lucide-react';
 
 const PROFESSIONALS: Record<string, User> = {
   '2': {
-    id: '2',
+    _id: '67ea87cba997d4c45941c2a8',
     fullName: 'Jane Engineer',
     email: 'engineer@example.com',
     phoneNumber: '123-456-7891',
@@ -33,7 +33,7 @@ const PROFESSIONALS: Record<string, User> = {
     degree: 'B.Tech Civil Engineering'
   },
   '3': {
-    id: '3',
+    _id: '3',
     fullName: 'Sam Architect',
     email: 'architect@example.com',
     phoneNumber: '123-456-7892',
@@ -42,7 +42,7 @@ const PROFESSIONALS: Record<string, User> = {
     degree: 'Master of Architecture'
   },
   '4': {
-    id: '4',
+    _id: '4',
     fullName: 'Priya Vastu',
     email: 'vastu@example.com',
     phoneNumber: '123-456-7893',
@@ -62,7 +62,7 @@ const UserRequestsPage = () => {
     
     const fetchRequests = async () => {
       try {
-        const userRequests = await getConsultationsByUser();
+        const userRequests = await getConsultationsByUser(user._id);
         setRequests(userRequests);
       } catch (error) {
         console.error('Error fetching consultation requests:', error);
