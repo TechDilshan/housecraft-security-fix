@@ -62,7 +62,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
         ) : (
           messages.map((message) => {
-            const isCurrentUser = message.senderId === currentUser.id;
+            const isCurrentUser = message.senderId === currentUser._id;
             const sender = isCurrentUser ? currentUser : professional;
             
             return (

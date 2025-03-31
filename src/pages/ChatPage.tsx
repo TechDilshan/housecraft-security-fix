@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 // Mock professional user data for the demo
 const PROFESSIONALS: Record<string, User> = {
   '2': {
-    id: '2',
+    _id: '67ea87cba997d4c45941c2a8',
     fullName: 'Jane Engineer',
     email: 'engineer@example.com',
     phoneNumber: '123-456-7891',
@@ -22,7 +22,7 @@ const PROFESSIONALS: Record<string, User> = {
     degree: 'B.Tech Civil Engineering'
   },
   '3': {
-    id: '3',
+    _id: '3',
     fullName: 'Sam Architect',
     email: 'architect@example.com',
     phoneNumber: '123-456-7892',
@@ -31,7 +31,7 @@ const PROFESSIONALS: Record<string, User> = {
     degree: 'Master of Architecture'
   },
   '4': {
-    id: '4',
+    _id: '4',
     fullName: 'Priya Vastu',
     email: 'vastu@example.com',
     phoneNumber: '123-456-7893',
@@ -89,13 +89,13 @@ const ChatPage = () => {
     if (!user || !consultation) return;
     
     try {
-      const recipientId = user.id === consultation.userId 
+      const recipientId = user._id === consultation.userId 
         ? consultation.professionalId 
         : consultation.userId;
       
       const newMessage = await addMessageToConsultation(
         consultation.id,
-        user.id,
+        user._id,
         recipientId,
         content
       );
@@ -155,7 +155,7 @@ const ChatPage = () => {
   }
   
   // Check if current user is part of this consultation
-  if (consultation.userId !== user.id && consultation.professionalId !== user.id) {
+  if (consultation.userId !== user._id && consultation.professionalId !== user._id) {
     return <Navigate to="/my-requests" />;
   }
   

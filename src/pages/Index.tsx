@@ -83,7 +83,7 @@ const Index = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {featuredHouses.map((house) => (
-                <HouseCard key={house.id} house={house} />
+                <HouseCard key={house._id} house={house} />
               ))}
             </div>
           )}

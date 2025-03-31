@@ -3,7 +3,7 @@
 export type UserRole = 'user' | 'admin' | 'engineer' | 'architect' | 'vastu';
 
 export interface User {
-  id: string;
+  _id: string;
   fullName: string;
   email: string;
   phoneNumber: string;
@@ -16,7 +16,7 @@ export interface User {
 export type HouseType = 'single' | 'two' | 'three' | 'box';
 
 export interface House {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   location: string;

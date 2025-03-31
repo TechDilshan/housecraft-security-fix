@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -44,21 +43,21 @@ const HouseDetailPage = () => {
   // Mock professionals for the demo
   const professionals: Record<string, User> = {
     engineer: {
-      id: '2',
+      _id: '67ea87cba997d4c45941c2a8',
       fullName: 'Jane Engineer',
       email: 'engineer@example.com',
       phoneNumber: '123-456-7891',
       role: 'engineer',
     },
     architect: {
-      id: '3',
+      _id: '3',
       fullName: 'Sam Architect',
       email: 'architect@example.com',
       phoneNumber: '123-456-7892',
       role: 'architect',
     },
     vastu: {
-      id: '4',
+      _id: '4',
       fullName: 'Priya Vastu',
       email: 'vastu@example.com',
       phoneNumber: '123-456-7893',
@@ -94,13 +93,13 @@ const HouseDetailPage = () => {
     setSubmitting(true);
     
     try {
-      const professionalId = professionals[consultationType].id;
+      const professionalId = professionals[consultationType]._id;
       
       await createConsultationRequest(
-        user.id,
+        user._id,
         professionalId,
         consultationType as any,
-        house.id,
+        house._id,
         message
       );
       
@@ -130,14 +129,23 @@ const HouseDetailPage = () => {
     setSubmitting(true);
     
     try {
-      const professionalId = professionals[type].id;
-      const initialMessage = `Hello, I'm interested in discussing the house "${house.title}" (ID: ${house.id})`;
+      const professionalId = professionals[type]._id;
+      const initialMessage = `Hello, I'm interested in discussing the house "${house.title}" (ID: ${house._id})`;
       
-      const consultationRequest = await createConsultationRequest(
-        user.id,
+      // Log the values being sent
+      console.log('Request data:', {
+        userId: user._id,
         professionalId,
         type,
-        house.id,
+        houseId: house._id,
+        message: initialMessage
+      });
+      
+      const consultationRequest = await createConsultationRequest(
+        user._id,
+        professionalId,
+        type,
+        house._id,
         initialMessage
       );
       
@@ -147,9 +155,11 @@ const HouseDetailPage = () => {
       });
       
       // Navigate to the chat page with the new consultation ID
-      navigate(`/chat/${consultationRequest.id}`);
+      navigate(`/chat/${consultationRequest._id}`);
     } catch (error) {
       console.error('Error creating consultation chat:', error);
+      // Log the full error object
+      console.log('Full error:', error);
       toast({
         title: 'Error',
         description: 'Could not connect with professional',

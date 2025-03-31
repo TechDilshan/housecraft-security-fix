@@ -28,10 +28,11 @@ const consultationRequestSchema = new mongoose.Schema({
     required: true
   },
   professionalId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,  // ✅ Correct
     ref: 'User',
     required: true
   },
+
   houseId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'House'

@@ -10,7 +10,7 @@ interface HouseCardProps {
 
 const HouseCard: React.FC<HouseCardProps> = ({ house }) => {
   return (
-    <Link to={`/houses/${house.id}`} className="house-card group">
+    <Link to={`/houses/${house._id}`} className="house-card group">
       <div className="relative overflow-hidden">
         <img 
           src={house.images[0]} 
