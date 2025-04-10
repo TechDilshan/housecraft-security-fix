@@ -50,14 +50,14 @@ const HouseDetailPage = () => {
       role: 'engineer',
     },
     architect: {
-      _id: '3',
+      _id: '67f80eaa718e333f999c7904',
       fullName: 'Sam Architect',
       email: 'architect@example.com',
       phoneNumber: '123-456-7892',
       role: 'architect',
     },
     vastu: {
-      _id: '4',
+      _id: '67f8106d718e333f999c7b0e',
       fullName: 'Priya Vastu',
       email: 'vastu@example.com',
       phoneNumber: '123-456-7893',
@@ -130,7 +130,7 @@ const HouseDetailPage = () => {
     
     try {
       const professionalId = professionals[type]._id;
-      const initialMessage = `Hello, I'm interested in discussing the house "${house.title}" (ID: ${house._id})`;
+      const initialMessage = `Hello, I'm interested in discussing the "${house.title}" in ${house.location}`;
       
       // Log the values being sent
       console.log('Request data:', {
