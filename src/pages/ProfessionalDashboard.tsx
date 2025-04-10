@@ -27,7 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 // Mock user data for the demo
 const USERS: Record<string, User> = {
   '1': {
-    id: '1',
+    _id: '1',
     fullName: 'John Doe',
     email: 'user@example.com',
     phoneNumber: '123-456-7890',
@@ -65,7 +65,7 @@ const ProfessionalDashboard = () => {
       
       setRequests(prevRequests => 
         prevRequests.map(req => 
-          req.id === requestId ? updatedRequest : req
+          req._id === requestId ? updatedRequest : req
         )
       );
       
@@ -89,7 +89,7 @@ const ProfessionalDashboard = () => {
       
       setRequests(prevRequests => 
         prevRequests.map(req => 
-          req.id === requestId ? updatedRequest : req
+          req._id === requestId ? updatedRequest : req
         )
       );
       
@@ -138,7 +138,7 @@ const ProfessionalDashboard = () => {
         <p className="text-muted-foreground text-center py-8">No consultation requests found in this category.</p>
       ) : (
         requests.map(request => (
-          <Card key={request.id} className="shadow-sm hover:shadow-md transition-shadow duration-300">
+          <Card key={request._id} className="shadow-sm hover:shadow-md transition-shadow duration-300">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
@@ -168,7 +168,7 @@ const ProfessionalDashboard = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Link to={`/chat/${request.id}`} className="flex-1">
+                <Link to={`/chat/${request._id}`} className="flex-1">
                   <Button variant="outline" className="w-full flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
                     View Conversation
@@ -178,7 +178,7 @@ const ProfessionalDashboard = () => {
                 {showAcceptButton && (
                   <Button 
                     className="flex items-center gap-2"
-                    onClick={() => handleAcceptRequest(request.id)}
+                    onClick={() => handleAcceptRequest(request._id)}
                   >
                     <Check className="h-4 w-4" />
                     Accept
@@ -188,7 +188,7 @@ const ProfessionalDashboard = () => {
                 {showCompleteButton && (
                   <Button 
                     className="flex items-center gap-2"
-                    onClick={() => handleCompleteRequest(request.id)}
+                    onClick={() => handleCompleteRequest(request._id)}
                   >
                     <Check className="h-4 w-4" />
                     Complete

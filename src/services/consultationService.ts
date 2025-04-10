@@ -64,7 +64,7 @@ export const updateConsultationStatus = async (
   consultationId: string,
   status: 'pending' | 'accepted' | 'completed' | 'rejected'
 ) => {
-  const response = await api.put(`/consultations/${consultationId}/status`, {
+  const response = await api.put(`/consultations/${consultationId}`, {
     status
   });
   return response.data;
