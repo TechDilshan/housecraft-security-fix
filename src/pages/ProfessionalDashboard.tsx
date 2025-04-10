@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -23,17 +22,6 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { MessageSquare, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock user data for the demo
-const USERS: Record<string, User> = {
-  '1': {
-    _id: '1',
-    fullName: 'John Doe',
-    email: 'user@example.com',
-    phoneNumber: '123-456-7890',
-    role: 'user',
-  }
-};
 
 const ProfessionalDashboard = () => {
   const { user } = useAuth();
@@ -137,67 +125,76 @@ const ProfessionalDashboard = () => {
       {requests.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">No consultation requests found in this category.</p>
       ) : (
-        requests.map(request => (
-          <Card key={request._id} className="shadow-sm hover:shadow-md transition-shadow duration-300">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback>
-                      {USERS[request.userId]?.fullName.substring(0, 2) || 'NA'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {USERS[request.userId]?.fullName || 'Client'}
-                    </CardTitle>
-                    <CardDescription>
-                      {format(new Date(request.createdAt), 'MMM d, yyyy')}
-                    </CardDescription>
+        requests.map(request => {
+          console.log(`Request User ID: ${request.userId}`); // Added console log for request.userId
+          const userDetails = 
+          typeof request.userId === 'string'
+            ? JSON.parse(request.userId) 
+            : request.userId;
+          
+          const userFullName = userDetails ? userDetails.fullName : 'Unknown User';
+          return (
+            <Card key={request._id} className="shadow-sm hover:shadow-md transition-shadow duration-300">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarFallback>
+                        {userFullName.substring(0, 2) || 'NA'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-lg">
+                        {userFullName}
+                      </CardTitle>
+                      <CardDescription>
+                        {format(new Date(request.createdAt), 'MMM d, yyyy')}
+                      </CardDescription>
+                    </div>
                   </div>
+                  <span className="text-xs px-2 py-1 rounded-full bg-secondary capitalize">
+                    {request.status}
+                  </span>
                 </div>
-                <span className="text-xs px-2 py-1 rounded-full bg-secondary capitalize">
-                  {request.status}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {request.messages[0]?.content || 'No message content'}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Link to={`/chat/${request._id}`} className="flex-1">
-                  <Button variant="outline" className="w-full flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    View Conversation
-                  </Button>
-                </Link>
-                
-                {showAcceptButton && (
-                  <Button 
-                    className="flex items-center gap-2"
-                    onClick={() => handleAcceptRequest(request._id)}
-                  >
-                    <Check className="h-4 w-4" />
-                    Accept
-                  </Button>
-                )}
-                
-                {showCompleteButton && (
-                  <Button 
-                    className="flex items-center gap-2"
-                    onClick={() => handleCompleteRequest(request._id)}
-                  >
-                    <Check className="h-4 w-4" />
-                    Complete
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {request.messages[0]?.content || 'No message content'}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Link to={`/chat/${request._id}`} className="flex-1">
+                    <Button variant="outline" className="w-full flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4" />
+                      View Conversation
+                    </Button>
+                  </Link>
+                  
+                  {showAcceptButton && (
+                    <Button 
+                      className="flex items-center gap-2"
+                      onClick={() => handleAcceptRequest(request._id)}
+                    >
+                      <Check className="h-4 w-4" />
+                      Accept
+                    </Button>
+                  )}
+                  
+                  {showCompleteButton && (
+                    <Button 
+                      className="flex items-center gap-2"
+                      onClick={() => handleCompleteRequest(request._id)}
+                    >
+                      <Check className="h-4 w-4" />
+                      Complete
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })
       )}
     </div>
   );
