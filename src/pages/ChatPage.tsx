@@ -1,155 +1,230 @@
-
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import { useAuth } from '@/context/AuthContext';
-import { getConsultationById, addMessageToConsultation, updateConsultationStatus } from '@/services/consultationService';
-import { getUserById } from '@/services/userService';
 import ChatInterface from '@/components/ChatInterface';
-import ProfessionalDetails from '@/components/ProfessionalDetails';
+import { useAuth } from '@/context/AuthContext';
+import { ConsultationRequest, User } from '@/types';
+import { getConsultationById, addMessageToConsultation } from '@/services/consultationService';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { User, ConsultationRequest } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+const PROFESSIONALS: Record<string, User> = {
+  '2': {
+    _id: '67ea87cba997d4c45941c2a8',
+    fullName: 'Jane Engineer',
+    email: 'engineer@example.com',
+    phoneNumber: '123-456-7891',
+    role: 'engineer',
+    profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
+    degree: 'B.Tech Civil Engineering',
+  },
+  '3': {
+    _id: '67f80eaa718e333f999c7904',
+    fullName: 'Sam Architect',
+    email: 'architect@example.com',
+    phoneNumber: '123-456-7892',
+    role: 'architect',
+    profileImage: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
+    degree: 'Master of Architecture',
+  },
+  '4': {
+    _id: '67f8106d718e333f999c7b0e',
+    fullName: 'Priya Vastu',
+    email: 'vastu@example.com',
+    phoneNumber: '123-456-7893',
+    role: 'vastu',
+    profileImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80',
+    degree: 'Ph.D in Vastu Shastra',
+  },
+};
 
 const ChatPage = () => {
   const { _id } = useParams<{ _id: string }>();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   const [consultation, setConsultation] = useState<ConsultationRequest | null>(null);
-  const [professional, setProfessional] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  useEffect(() => {
-    if (!_id || !user) return;
-    
-    const loadConsultation = async () => {
-      try {
-        setLoading(true);
-        
-        const consultationData = await getConsultationById(_id);
-        setConsultation(consultationData);
-        
-        // Fetch professional details
-        let professionalId;
-        if (user.role === 'user') {
-          professionalId = consultationData.professionalId;
-        } else {
-          professionalId = consultationData.userId;
-        }
-        
-        const professionalData = await getUserById(professionalId);
-        setProfessional(professionalData);
-        
-      } catch (err) {
-        console.error('Error loading consultation:', err);
-        setError('Failed to load consultation');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadConsultation();
-  }, [_id, user]);
-  
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-  
-  const handleSendMessage = async (content: string) => {
-    if (!consultation || !user) return;
-    
+
+  const fetchConsultation = async () => {
     try {
-      // Determine recipient ID based on user role
-      const recipientId = user.role === 'user' 
-        ? consultation.professionalId 
-        : consultation.userId;
-      
-      const updatedConsultation = await addMessageToConsultation(
+      const consultationData = await getConsultationById(_id);
+      setConsultation(consultationData);
+    } catch (error) {
+      console.error('Error fetching consultation:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not load chat data',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    fetchConsultation();
+    const interval = setInterval(fetchConsultation, 5000);
+
+    return () => clearInterval(interval);
+  }, [_id, user, navigate]);
+
+  const handleSendMessage = async (content: string) => {
+    if (!user || !consultation) return;
+
+    try {
+      const recipientId =
+        user._id === consultation.userId ? consultation.professionalId : consultation.userId;
+
+      const newMessage = await addMessageToConsultation(
         consultation._id,
         user._id,
         recipientId,
         content
       );
-      
-      setConsultation(updatedConsultation);
-    } catch (err) {
-      console.error('Error sending message:', err);
+
+      setConsultation((prev) => prev && { ...prev, messages: [...(prev.messages || []), newMessage] });
+
+      setTimeout(fetchConsultation, 1000);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not send message',
+        variant: 'destructive',
+      });
     }
   };
-  
-  const handleStatusChange = async (status: 'accepted' | 'completed' | 'rejected') => {
-    if (!consultation) return;
-    
-    try {
-      const updatedConsultation = await updateConsultationStatus(consultation._id, status);
-      setConsultation(updatedConsultation);
-    } catch (err) {
-      console.error('Error updating status:', err);
-    }
-  };
-  
-  // Determine the correct return link based on user role
-  const getReturnLink = () => {
-    if (!user) return '/login';
-    
-    if (user.role === 'user') {
-      return '/my-requests';
-    } else if (user.role === 'admin') {
-      return '/admin';
-    } else {
-      return `/${user.role}-dashboard`;
-    }
-  };
-  
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-4xl animate-pulse">
+            <div className="h-[600px] bg-muted rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!consultation) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-4">Conversation Not Found</h2>
+            <p className="text-muted-foreground mb-6">
+              The conversation you're looking for does not exist or has been removed.
+            </p>
+            <Link to="/my-requests">
+              <Button>Back to My Requests</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const professional = 
+  typeof consultation.professionalId === 'string'
+    ? JSON.parse(consultation.professionalId) 
+    : consultation.professionalId;
+
+  const professionalImage = professional ? professional.profileImage : '';
+  const professionalName = professional ? professional.fullName : 'Unknown Professional';
+
+  const returnPath = user.role === 'user' ? '/my-requests' : `/${user.role}-dashboard`;
+
+  const sortedMessages = Array.isArray(consultation.messages)
+    ? [...consultation.messages].sort(
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      )
+    : [];
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-1 py-10">
         <div className="container max-w-4xl">
           <div className="mb-6">
-            <Link to={getReturnLink()} className="inline-flex items-center text-accent hover:underline">
+            <Link to={returnPath} className="inline-flex items-center text-accent hover:underline">
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Dashboard
+              {user.role === 'user' ? 'Back to My Requests' : 'Back to Dashboard'}
             </Link>
           </div>
+
+          <ChatInterface
+            messages={sortedMessages}
+            currentUser={user}
+            professional={{
+              fullName: professionalName,
+              profileImage: professionalImage,
+              ...professional,
+            }}
+            onSendMessage={handleSendMessage}
+          />
           
-          {loading ? (
-            <div className="h-80 flex items-center justify-center">
-              <p>Loading chat...</p>
-            </div>
-          ) : error ? (
-            <div className="text-center py-16">
-              <h3 className="text-xl font-medium mb-2">Error</h3>
-              <p className="text-muted-foreground">{error}</p>
-            </div>
-          ) : consultation ? (
-            <div>
-              <ChatInterface
-                messages={consultation.messages}
-                onSendMessage={handleSendMessage}
-                consultation={consultation}
-                currentUser={user}
-                onStatusChange={handleStatusChange}
-              />
-              
-              {/* Show professional details for users, or client details for professionals */}
-              {professional && (
-                <ProfessionalDetails professional={professional} />
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <h3 className="text-xl font-medium mb-2">Consultation not found</h3>
-              <p className="text-muted-foreground">
-                The requested consultation could not be found.
-              </p>
-            </div>
-          )}
+          <Card className="mt-8 shadow-sm">
+            <CardHeader>
+              <CardTitle>Professional Details</CardTitle>
+              <CardDescription>
+                Information about your consultant
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={professionalImage} />
+                  <AvatarFallback className="text-lg">{professionalName.substring(0, 2)}</AvatarFallback>
+                </Avatar>
+                
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-lg font-medium">{professionalName}</h3>
+                    <p className="text-muted-foreground capitalize">{professional?.role || 'Professional'}</p>
+                  </div>
+                  
+                  {professional?.email && (
+                    <div>
+                      <p className="text-sm font-medium">Email</p>
+                      <p className="text-muted-foreground">{professional.email}</p>
+                    </div>
+                  )}
+                  
+                  {professional?.degree && (
+                    <div>
+                      <p className="text-sm font-medium">Qualifications</p>
+                      <p className="text-muted-foreground">{professional.degree}</p>
+                    </div>
+                  )}
+                  
+                  {professional?.phoneNumber && (
+                    <div>
+                      <p className="text-sm font-medium">Contact</p>
+                      <p className="text-muted-foreground">{professional.phoneNumber}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
-      
-      <footer className="bg-estate-950 text-white py-6 mt-auto">
+
+      <footer className="bg-estate-950 text-white py-6">
         <div className="container text-center text-white/50 text-sm">
           <p>&copy; {new Date().getFullYear()} EstateCraft. All rights reserved.</p>
         </div>

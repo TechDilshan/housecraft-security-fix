@@ -12,59 +12,70 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { getProfessionals } from '@/services/userService';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatCurrency } from '@/lib/utils';
-import {
-  CalendarClock,
-  HomeIcon,
-  MapPin,
-  DollarSign,
-  Check,
-  ArrowLeft,
-  Users,
-} from 'lucide-react';
-import ProfessionalCard from '@/components/ProfessionalCard';
 
 const HouseDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [house, setHouse] = useState<House | null>(null);
   const [loading, setLoading] = useState(true);
-  const [engineers, setEngineers] = useState<User[]>([]);
-  const [architects, setArchitects] = useState<User[]>([]);
-  const [vastuExperts, setVastuExperts] = useState<User[]>([]);
-  const [loadingProfessionals, setLoadingProfessionals] = useState(false);
-  const [requesting, setRequesting] = useState(false);
-  const [consultationType, setConsultationType] = useState<'engineer' | 'architect' | 'vastu'>('engineer');
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [consultationType, setConsultationType] = useState('engineer');
+  const [submitting, setSubmitting] = useState(false);
   
-  // Fetch house data
+  const professionals: Record<string, User> = {
+    engineer: {
+      _id: '67ea87cba997d4c45941c2a8',
+      fullName: 'Jane Engineer',
+      email: 'engineer@example.com',
+      phoneNumber: '123-456-7891',
+      role: 'engineer',
+    },
+    architect: {
+      _id: '67f80eaa718e333f999c7904',
+      fullName: 'Sam Architect',
+      email: 'architect@example.com',
+      phoneNumber: '123-456-7892',
+      role: 'architect',
+    },
+    vastu: {
+      _id: '67f8106d718e333f999c7b0e',
+      fullName: 'Priya Vastu',
+      email: 'vastu@example.com',
+      phoneNumber: '123-456-7893',
+      role: 'vastu',
+    },
+  };
+  
   useEffect(() => {
     if (!id) return;
     
     const fetchHouse = async () => {
       try {
-        const data = await getHouseById(id);
-        setHouse(data);
+        const houseData = await getHouseById(id);
+        setHouse(houseData);
       } catch (error) {
         console.error('Error fetching house:', error);
         toast({
           title: 'Error',
-          description: 'Could not fetch house details',
+          description: 'Could not load house details',
           variant: 'destructive',
         });
       } finally {
@@ -74,105 +85,113 @@ const HouseDetailPage = () => {
     
     fetchHouse();
   }, [id, toast]);
-  
-  // Fetch professionals
-  useEffect(() => {
-    const fetchProfessionals = async () => {
-      try {
-        setLoadingProfessionals(true);
-        
-        const [engineerList, architectList, vastuList] = await Promise.all([
-          getProfessionals('engineer'),
-          getProfessionals('architect'),
-          getProfessionals('vastu'),
-        ]);
-        
-        setEngineers(engineerList);
-        setArchitects(architectList);
-        setVastuExperts(vastuList);
-      } catch (error) {
-        console.error('Error fetching professionals:', error);
-      } finally {
-        setLoadingProfessionals(false);
-      }
-    };
+
+  const handleRequestConsultation = async () => {
+    if (!user || !house) return;
     
-    fetchProfessionals();
-  }, []);
-  
-  // Request house
-  const handleRequestHouse = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    
-    if (!house) return;
+    setSubmitting(true);
     
     try {
-      setRequesting(true);
-      await createHouseRequest(house._id);
+      const professionalId = professionals[consultationType]._id;
+      
+      await createConsultationRequest(
+        user._id,
+        professionalId,
+        consultationType as any,
+        house._id,
+        message
+      );
+      
+      setOpen(false);
       
       toast({
         title: 'Request Sent',
-        description: 'Your house request has been submitted successfully',
+        description: `Your consultation request has been sent to our ${consultationType}`,
+      });
+      
+      navigate('/my-requests');
+    } catch (error) {
+      console.error('Error creating consultation request:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not send consultation request',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleContactProfessional = async (type: 'engineer' | 'architect' | 'vastu') => {
+    if (!user || !house) return;
+    
+    setSubmitting(true);
+    
+    try {
+      const professionalId = professionals[type]._id;
+      const initialMessage = `Hello, I'm interested in discussing the "${house.title}" in ${house.location}`;
+      
+      console.log('Request data:', {
+        userId: user._id,
+        professionalId,
+        type,
+        houseId: house._id,
+        message: initialMessage
+      });
+      
+      const consultationRequest = await createConsultationRequest(
+        user._id,
+        professionalId,
+        type,
+        house._id,
+        initialMessage
+      );
+      
+      toast({
+        title: 'Chat Started',
+        description: `You are now connected with our ${type}`,
+      });
+      
+      navigate(`/chat/${consultationRequest._id}`);
+    } catch (error) {
+      console.error('Error creating consultation chat:', error);
+      console.log('Full error:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not connect with professional',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleContactAgent = () => {
+    if (!user || !house) return;
+    
+    toast({
+      title: 'Agent Contacted',
+      description: 'Our agent will contact you shortly about this property.',
+    });
+  };
+  
+  const handleRequestHouse = async () => {
+    if (!user || !house) return;
+    
+    try {
+      await createHouseRequest(house._id);
+      
+      toast({
+        title: 'House Requested',
+        description: 'Your request for this house has been submitted successfully!',
       });
     } catch (error) {
       console.error('Error requesting house:', error);
       toast({
         title: 'Error',
-        description: 'Could not submit your request',
+        description: 'Could not submit your house request',
         variant: 'destructive',
       });
-    } finally {
-      setRequesting(false);
-    }
-  };
-  
-  // Request consultation
-  const handleRequestConsultation = async (professionalId: string) => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    
-    if (!house) return;
-    
-    try {
-      const consultation = await createConsultationRequest(
-        user._id,
-        professionalId,
-        consultationType,
-        house._id
-      );
-      
-      toast({
-        title: 'Consultation Requested',
-        description: 'Your consultation request has been sent',
-      });
-      
-      navigate(`/chat/${consultation._id}`);
-    } catch (error) {
-      console.error('Error requesting consultation:', error);
-      toast({
-        title: 'Error',
-        description: 'Could not request consultation',
-        variant: 'destructive',
-      });
-    }
-  };
-  
-  // Show appropriate professionals based on selected consultation type
-  const getProfessionalsByType = () => {
-    switch (consultationType) {
-      case 'engineer':
-        return engineers;
-      case 'architect':
-        return architects;
-      case 'vastu':
-        return vastuExperts;
-      default:
-        return [];
     }
   };
   
@@ -180,16 +199,14 @@ const HouseDetailPage = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 py-10">
-          <div className="container">
-            <div className="animate-pulse">
-              <div className="h-80 bg-gray-200 rounded-lg mb-8"></div>
-              <div className="h-12 bg-gray-200 rounded-lg w-3/4 mb-4"></div>
-              <div className="h-8 bg-gray-200 rounded-lg w-1/2 mb-8"></div>
-              <div className="h-32 bg-gray-200 rounded-lg mb-8"></div>
-            </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-6xl animate-pulse">
+            <div className="h-80 bg-muted rounded-lg mb-8" />
+            <div className="h-12 bg-muted rounded-lg w-1/2 mb-4" />
+            <div className="h-6 bg-muted rounded-lg w-1/4 mb-8" />
+            <div className="h-40 bg-muted rounded-lg mb-8" />
           </div>
-        </main>
+        </div>
       </div>
     );
   }
@@ -198,15 +215,17 @@ const HouseDetailPage = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-1 py-10">
-          <div className="container text-center">
-            <h1 className="text-2xl font-medium mb-4">House Not Found</h1>
-            <p className="mb-8">The house you're looking for doesn't exist or has been removed.</p>
-            <Button asChild>
-              <Link to="/houses">Browse All Houses</Link>
-            </Button>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-4">House Not Found</h2>
+            <p className="text-muted-foreground mb-6">
+              The house you're looking for does not exist or has been removed.
+            </p>
+            <Link to="/houses">
+              <Button>Back to Houses</Button>
+            </Link>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
@@ -217,143 +236,154 @@ const HouseDetailPage = () => {
       
       <main className="flex-1 py-10">
         <div className="container">
-          <div className="mb-6">
-            <Link to="/houses" className="inline-flex items-center text-accent hover:underline">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Houses
+          <div className="mb-8">
+            <Link to="/houses" className="text-accent hover:underline">
+              ← Back to Houses
             </Link>
           </div>
           
-          {/* House Images */}
-          <div className="mb-8">
-            <HouseCarousel images={house.images} />
-          </div>
-          
-          {/* House Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <h1 className="text-3xl font-serif mb-2">{house.title}</h1>
-              <div className="flex items-center text-muted-foreground mb-6">
-                <MapPin className="h-4 w-4 mr-1" />
-                <span>{house.location}</span>
-              </div>
+              <HouseCarousel images={house.images} title={house.title} />
               
-              <div className="prose max-w-none mb-8">
-                <p>{house.description}</p>
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-secondary/30 p-4 rounded-lg flex flex-col items-center justify-center">
-                  <HomeIcon className="h-5 w-5 mb-2 text-primary" />
-                  <span className="text-sm text-center">
+              <div className="mt-8">
+                <h1 className="text-3xl font-serif mb-2">{house.title}</h1>
+                <p className="text-lg text-muted-foreground mb-4">{house.location}</p>
+                
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <span className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm">
                     {house.houseType === 'single' && 'Single Story'}
                     {house.houseType === 'two' && 'Two Story'}
                     {house.houseType === 'three' && 'Three Story'}
                     {house.houseType === 'box' && 'Box Style'}
                   </span>
-                </div>
-                <div className="bg-secondary/30 p-4 rounded-lg flex flex-col items-center justify-center">
-                  <CalendarClock className="h-5 w-5 mb-2 text-primary" />
-                  <span className="text-sm text-center">
+                  <span className={`px-3 py-1 rounded-full text-sm ${
+                    house.available 
+                      ? 'bg-emerald-100 text-emerald-800' 
+                      : 'bg-rose-100 text-rose-800'
+                  }`}>
                     {house.available ? 'Available' : 'Sold'}
                   </span>
+                </div>
+                
+                <div className="prose max-w-none mb-8">
+                  <h2 className="text-xl font-medium mb-2">Description</h2>
+                  <p className="text-muted-foreground">{house.description}</p>
                 </div>
               </div>
             </div>
             
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Price</span>
-                    <span className="text-primary">{formatCurrency(house.price)}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {house.available ? (
-                    <>
-                      <Button 
-                        className="w-full" 
-                        onClick={handleRequestHouse}
-                        disabled={requesting}
-                      >
-                        {requesting ? 'Sending Request...' : 'Request This House'}
-                      </Button>
-                      <p className="text-sm text-muted-foreground text-center">
-                        Submit your interest in this property
-                      </p>
-                    </>
-                  ) : (
-                    <div className="text-center p-4 border rounded-lg bg-red-50">
-                      <p className="font-medium text-red-600">This house is no longer available</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-          
-          {/* Consultation Section */}
-          <Card className="mb-12">
-            <CardHeader>
-              <CardTitle>Consult a Professional</CardTitle>
-              <CardDescription>
-                Get expert advice on this property from our professionals
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6">
-                <div className="flex space-x-2 mb-6">
-                  <Button 
-                    onClick={() => setConsultationType('engineer')}
-                    variant={consultationType === 'engineer' ? 'default' : 'outline'}
-                  >
-                    Engineers
-                  </Button>
-                  <Button 
-                    onClick={() => setConsultationType('architect')}
-                    variant={consultationType === 'architect' ? 'default' : 'outline'}
-                  >
-                    Architects
-                  </Button>
-                  <Button 
-                    onClick={() => setConsultationType('vastu')}
-                    variant={consultationType === 'vastu' ? 'default' : 'outline'}
-                  >
-                    Vastu Experts
-                  </Button>
+            <div className="lg:col-span-1">
+              <div className="bg-card rounded-lg shadow-sm p-6 sticky top-8">
+                <div className="text-3xl font-semibold mb-6 text-estate-950">
+                  {formatCurrency(house.price)}
                 </div>
                 
-                {loadingProfessionals ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3].map((_, index) => (
-                      <div key={index} className="h-48 bg-card animate-pulse rounded-lg" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {getProfessionalsByType().length === 0 ? (
-                      <div className="col-span-full text-center py-10">
-                        <Users className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-                        <h3 className="text-lg font-medium mb-1">No Professionals Available</h3>
-                        <p className="text-muted-foreground">
-                          There are currently no {consultationType}s available. Please check back later.
-                        </p>
-                      </div>
-                    ) : (
-                      getProfessionalsByType().map((professional) => (
-                        <ProfessionalCard
-                          key={professional._id}
-                          professional={professional}
-                          onRequest={() => handleRequestConsultation(professional._id)}
-                        />
-                      ))
+                {house.available ? (
+                  <>
+                    {user && user.role === 'user' && (
+                      <Button className="w-full mb-4" size="lg" onClick={handleRequestHouse}>
+                        Request This House
+                      </Button>
                     )}
-                  </div>
+                  </>
+                ) : (
+                  <Dialog open={open} onOpenChange={setOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full mb-4" size="lg">
+                        Request Similar House
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Request a Similar House</DialogTitle>
+                        <DialogDescription>
+                          This property is already sold, but our professionals can help you build a similar one.
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Consultation Type
+                          </label>
+                          <Select 
+                            onValueChange={setConsultationType} 
+                            defaultValue={consultationType}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select professional" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="engineer">Engineer</SelectItem>
+                              <SelectItem value="architect">Architect</SelectItem>
+                              <SelectItem value="vastu">Vastu Expert</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Your Message
+                          </label>
+                          <Textarea
+                            placeholder="Describe what you're looking for..."
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            rows={4}
+                          />
+                        </div>
+                      </div>
+                      
+                      <DialogFooter>
+                        <Button 
+                          onClick={handleRequestConsultation} 
+                          disabled={!user || submitting}
+                        >
+                          {submitting ? 'Sending...' : 'Send Request'}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 )}
+                
+                <div className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => handleContactProfessional('engineer')}
+                    disabled={!user || submitting}
+                  >
+                    {submitting ? 'Connecting...' : 'Consult Engineer'}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => handleContactProfessional('architect')}
+                    disabled={!user || submitting}
+                  >
+                    {submitting ? 'Connecting...' : 'Consult Architect'}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => handleContactProfessional('vastu')}
+                    disabled={!user || submitting}
+                  >
+                    {submitting ? 'Connecting...' : 'Vastu Consultation'}
+                  </Button>
+                  
+                  {!user && (
+                    <p className="text-sm text-muted-foreground mt-4 text-center">
+                      Please <Link to="/login" className="text-accent">log in</Link> to request consultations
+                    </p>
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </main>
       
