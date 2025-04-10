@@ -80,7 +80,7 @@ const HousesPage = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredHouses.map((house) => (
-                    <HouseCard key={house.id} house={house} />
+                    <HouseCard key={house._id} house={house} />
                   ))}
                 </div>
               )}

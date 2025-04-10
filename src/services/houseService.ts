@@ -51,3 +51,4 @@ export const createHouseRequest = async (houseId: string) => {
   const response = await api.post('/houses/requests', { houseId });
   return response.data;
 };
+

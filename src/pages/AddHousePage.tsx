@@ -75,9 +75,8 @@ const AddHousePage = () => {
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      // Create a properly typed house object
-      // All fields from the form are required since they're validated by zod
-      const houseData: Omit<House, 'id'> = {
+      // Create a properly typed house object with _id field
+      const houseData: Omit<House, '_id'> = {
         title: values.title,
         description: values.description,
         location: values.location,
