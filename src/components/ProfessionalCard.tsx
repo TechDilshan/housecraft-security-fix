@@ -8,10 +8,10 @@ import { MessageSquare } from 'lucide-react';
 
 interface ProfessionalCardProps {
   professional: User;
-  onRequest: () => void;
+  onStartChat: () => void;
 }
 
-const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, onRequest }) => {
+const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, onStartChat }) => {
   return (
     <Card className="shadow-sm hover:shadow transition-shadow duration-300">
       <CardHeader className="pb-2">
@@ -30,9 +30,9 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, onReq
         {professional.degree && (
           <p className="text-sm text-muted-foreground mb-4">{professional.degree}</p>
         )}
-        <Button onClick={onRequest} className="w-full gap-2">
+        <Button onClick={onStartChat} className="w-full gap-2">
           <MessageSquare className="h-4 w-4" />
-          Request Consultation
+          Start Chat
         </Button>
       </CardContent>
     </Card>
