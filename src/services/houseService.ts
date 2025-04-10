@@ -46,6 +46,12 @@ export const getHouseRequests = async () => {
   return response.data;
 };
 
+// Get house requests (admin only)
+export const getReqHouseRequests = async () => {
+  const response = await api.get('/houses/requests/all');
+  return response.data;
+};
+
 // Create house request (user)
 export const createHouseRequest = async (houseId: string) => {
   const response = await api.post('/houses/requests', { houseId });

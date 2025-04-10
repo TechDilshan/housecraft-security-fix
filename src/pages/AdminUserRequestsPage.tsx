@@ -4,7 +4,7 @@ import { Navigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { getHouseRequests } from '@/services/houseService';
+import { getReqHouseRequests } from '@/services/houseService';
 import {
   Card,
   CardContent,
@@ -54,7 +54,7 @@ const AdminUserRequestsPage = () => {
     
     const fetchRequests = async () => {
       try {
-        const allRequests = await getHouseRequests();
+        const allRequests = await getReqHouseRequests();
         setRequests(allRequests);
       } catch (error) {
         console.error('Error fetching house requests:', error);
