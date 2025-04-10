@@ -4,7 +4,7 @@ import { Navigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { getHouseRequests } from '@/services/houseService';
+import { getHouseRequests, updateHouseRequestStatus } from '@/services/houseService';
 import {
   Card,
   CardContent,
@@ -71,6 +71,31 @@ const AdminUserRequestsPage = () => {
     fetchRequests();
   }, [user, toast]);
   
+  const handleStatusUpdate = async (requestId: string, status: 'approved' | 'rejected') => {
+    try {
+      await updateHouseRequestStatus(requestId, status);
+      
+      // Update local state
+      setRequests(prevRequests => 
+        prevRequests.map(request => 
+          request._id === requestId ? { ...request, status } : request
+        )
+      );
+      
+      toast({
+        title: `Request ${status}`,
+        description: `The house request has been ${status}.`,
+      });
+    } catch (error) {
+      console.error(`Error ${status} request:`, error);
+      toast({
+        title: 'Error',
+        description: `Could not ${status} the request`,
+        variant: 'destructive',
+      });
+    }
+  };
+  
   if (!user || user.role !== 'admin') {
     return <Navigate to="/login" />;
   }
@@ -110,6 +135,7 @@ const AdminUserRequestsPage = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>User</TableHead>
+                      <TableHead>Contact</TableHead>
                       <TableHead>House</TableHead>
                       <TableHead>Location</TableHead>
                       <TableHead>Requested</TableHead>
@@ -121,10 +147,11 @@ const AdminUserRequestsPage = () => {
                     {requests.map((request) => (
                       <TableRow key={request._id}>
                         <TableCell>
-                          <div>
-                            <div className="font-medium">{request.userId.fullName}</div>
-                            <div className="text-sm text-muted-foreground">{request.userId.email}</div>
-                          </div>
+                          <div className="font-medium">{request.userId.fullName}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{request.userId.email}</div>
+                          <div className="text-sm text-muted-foreground">{request.userId.phoneNumber}</div>
                         </TableCell>
                         <TableCell>{request.houseId.title}</TableCell>
                         <TableCell>{request.houseId.location}</TableCell>
@@ -142,12 +169,23 @@ const AdminUserRequestsPage = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button size="sm" variant={request.status === 'approved' ? 'outline' : 'default'} 
-                              className={request.status === 'approved' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}>
+                            <Button 
+                              size="sm" 
+                              variant={request.status === 'approved' ? 'outline' : 'default'} 
+                              className={request.status === 'approved' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                              onClick={() => handleStatusUpdate(request._id, 'approved')}
+                              disabled={request.status === 'approved'}
+                            >
                               {request.status === 'approved' ? 'Approved' : 'Approve'}
                             </Button>
-                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-800">
-                              Reject
+                            <Button 
+                              size="sm" 
+                              variant={request.status === 'rejected' ? 'outline' : 'destructive'} 
+                              className={request.status === 'rejected' ? 'bg-red-100 text-red-800 hover:bg-red-200' : ''}
+                              onClick={() => handleStatusUpdate(request._id, 'rejected')}
+                              disabled={request.status === 'rejected'}
+                            >
+                              {request.status === 'rejected' ? 'Rejected' : 'Reject'}
                             </Button>
                           </div>
                         </TableCell>

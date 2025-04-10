@@ -42,7 +42,7 @@ export const deleteHouse = async (id: string) => {
 
 // Get house requests (admin only)
 export const getHouseRequests = async () => {
-  const response = await api.get('/houses/requests');
+  const response = await api.get('/houses/requests/all');
   return response.data;
 };
 
@@ -52,3 +52,8 @@ export const createHouseRequest = async (houseId: string) => {
   return response.data;
 };
 
+// Update house request status (admin only)
+export const updateHouseRequestStatus = async (requestId: string, status: 'pending' | 'approved' | 'rejected') => {
+  const response = await api.put(`/houses/requests/${requestId}`, { status });
+  return response.data;
+};
