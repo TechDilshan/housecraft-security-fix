@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -25,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
-import { Plus, Pencil, Trash } from 'lucide-react';
+import { Plus, Pencil, Trash, Users } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -134,12 +133,20 @@ const AdminDashboard = () => {
         <div className="container">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-serif">Admin Dashboard</h1>
-            <Link to="/admin/add-house">
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Add New House
-              </Button>
-            </Link>
+            <div className="flex gap-3">
+              <Link to="/admin/user-requests">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  User Requests
+                </Button>
+              </Link>
+              <Link to="/admin/add-house">
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add New House
+                </Button>
+              </Link>
+            </div>
           </div>
           
           <Card className="shadow-sm mb-10">

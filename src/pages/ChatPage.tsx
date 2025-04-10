@@ -8,6 +8,8 @@ import { getConsultationById, addMessageToConsultation } from '@/services/consul
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const PROFESSIONALS: Record<string, User> = {
   '2': {
@@ -43,7 +45,7 @@ const ChatPage = () => {
   const { _id } = useParams<{ _id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate(); // Use navigate instead of Navigate component
+  const navigate = useNavigate();
 
   const [consultation, setConsultation] = useState<ConsultationRequest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ const ChatPage = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/login'); // Redirect to login page if user is not authenticated
+      navigate('/login');
       return;
     }
 
@@ -74,15 +76,7 @@ const ChatPage = () => {
     const interval = setInterval(fetchConsultation, 5000);
 
     return () => clearInterval(interval);
-  }, [_id, user, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // useEffect(() => {
-  //   if (!loading && consultation && user) {
-  //     if (consultation.userId !== user._id && consultation.professionalId !== user._id) {
-  //       navigate('/my-requests'); // Redirect if user is not part of the chat
-  //     }
-  //   }
-  // }, [consultation, user, loading, navigate]);
+  }, [_id, user, navigate]);
 
   const handleSendMessage = async (content: string) => {
     if (!user || !consultation) return;
@@ -143,15 +137,11 @@ const ChatPage = () => {
     );
   }
 
-  // Ensure professional exists before passing to ChatInterface
   const professional = 
   typeof consultation.professionalId === 'string'
     ? JSON.parse(consultation.professionalId) 
     : consultation.professionalId;
 
-
-
-  // If professional is not found, you can pass a fallback or empty object
   const professionalImage = professional ? professional.profileImage : '';
   const professionalName = professional ? professional.fullName : 'Unknown Professional';
 
@@ -161,7 +151,7 @@ const ChatPage = () => {
     ? [...consultation.messages].sort(
         (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       )
-    : []; // Ensure it's an array before attempting to sort
+    : [];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -182,10 +172,55 @@ const ChatPage = () => {
             professional={{
               fullName: professionalName,
               profileImage: professionalImage,
-              ...professional, // Spread the rest of the data (safety)
+              ...professional,
             }}
             onSendMessage={handleSendMessage}
           />
+          
+          <Card className="mt-8 shadow-sm">
+            <CardHeader>
+              <CardTitle>Professional Details</CardTitle>
+              <CardDescription>
+                Information about your consultant
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={professionalImage} />
+                  <AvatarFallback className="text-lg">{professionalName.substring(0, 2)}</AvatarFallback>
+                </Avatar>
+                
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-lg font-medium">{professionalName}</h3>
+                    <p className="text-muted-foreground capitalize">{professional?.role || 'Professional'}</p>
+                  </div>
+                  
+                  {professional?.email && (
+                    <div>
+                      <p className="text-sm font-medium">Email</p>
+                      <p className="text-muted-foreground">{professional.email}</p>
+                    </div>
+                  )}
+                  
+                  {professional?.degree && (
+                    <div>
+                      <p className="text-sm font-medium">Qualifications</p>
+                      <p className="text-muted-foreground">{professional.degree}</p>
+                    </div>
+                  )}
+                  
+                  {professional?.phoneNumber && (
+                    <div>
+                      <p className="text-sm font-medium">Contact</p>
+                      <p className="text-muted-foreground">{professional.phoneNumber}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
 

@@ -23,7 +23,7 @@ export const getHouseById = async (id: string) => {
 };
 
 // Create new house (admin only)
-export const createHouse = async (houseData: Omit<House, 'id'>) => {
+export const createHouse = async (houseData: Omit<House, '_id'>) => {
   const response = await api.post('/houses', houseData);
   return response.data;
 };
@@ -37,5 +37,17 @@ export const updateHouse = async (id: string, updates: Partial<House>) => {
 // Delete house (admin only)
 export const deleteHouse = async (id: string) => {
   const response = await api.delete(`/houses/${id}`);
+  return response.data;
+};
+
+// Get house requests (admin only)
+export const getHouseRequests = async () => {
+  const response = await api.get('/houses/requests');
+  return response.data;
+};
+
+// Create house request (user)
+export const createHouseRequest = async (houseId: string) => {
+  const response = await api.post('/houses/requests', { houseId });
   return response.data;
 };

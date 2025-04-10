@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { House, User } from '@/types';
 import { getHouseById } from '@/services/houseService';
-import { createConsultationRequest } from '@/services/consultationService';
+import { createConsultationRequest, createHouseRequest } from '@/services/consultationService';
 import HouseCarousel from '@/components/HouseCarousel';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
@@ -40,7 +40,6 @@ const HouseDetailPage = () => {
   const [consultationType, setConsultationType] = useState('engineer');
   const [submitting, setSubmitting] = useState(false);
   
-  // Mock professionals for the demo
   const professionals: Record<string, User> = {
     engineer: {
       _id: '67ea87cba997d4c45941c2a8',
@@ -132,7 +131,6 @@ const HouseDetailPage = () => {
       const professionalId = professionals[type]._id;
       const initialMessage = `Hello, I'm interested in discussing the "${house.title}" in ${house.location}`;
       
-      // Log the values being sent
       console.log('Request data:', {
         userId: user._id,
         professionalId,
@@ -154,11 +152,9 @@ const HouseDetailPage = () => {
         description: `You are now connected with our ${type}`,
       });
       
-      // Navigate to the chat page with the new consultation ID
       navigate(`/chat/${consultationRequest._id}`);
     } catch (error) {
       console.error('Error creating consultation chat:', error);
-      // Log the full error object
       console.log('Full error:', error);
       toast({
         title: 'Error',
@@ -170,7 +166,6 @@ const HouseDetailPage = () => {
     }
   };
 
-  // Handle direct contact with agent (for available houses)
   const handleContactAgent = () => {
     if (!user || !house) return;
     
@@ -180,14 +175,24 @@ const HouseDetailPage = () => {
     });
   };
   
-  // Handle house request (for available houses)
-  const handleRequestHouse = () => {
+  const handleRequestHouse = async () => {
     if (!user || !house) return;
     
-    toast({
-      title: 'House Requested',
-      description: 'Your request for this house has been submitted successfully!',
-    });
+    try {
+      await createHouseRequest(house._id);
+      
+      toast({
+        title: 'House Requested',
+        description: 'Your request for this house has been submitted successfully!',
+      });
+    } catch (error) {
+      console.error('Error requesting house:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not submit your house request',
+        variant: 'destructive',
+      });
+    }
   };
   
   if (loading) {
@@ -281,14 +286,6 @@ const HouseDetailPage = () => {
                         Request This House
                       </Button>
                     )}
-                    {/* <Button 
-                      className="w-full mb-4" 
-                      size="lg"
-                      onClick={handleContactAgent}
-                      disabled={!user}
-                    >
-                      Contact Agent
-                    </Button> */}
                   </>
                 ) : (
                   <Dialog open={open} onOpenChange={setOpen}>
