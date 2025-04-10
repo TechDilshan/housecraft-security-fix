@@ -52,7 +52,6 @@ const HouseDetailPage = () => {
   const [requesting, setRequesting] = useState(false);
   const [consultationType, setConsultationType] = useState<'engineer' | 'architect' | 'vastu'>('engineer');
   
-  // Fetch house data
   useEffect(() => {
     if (!id) return;
     
@@ -75,7 +74,6 @@ const HouseDetailPage = () => {
     fetchHouse();
   }, [id, toast]);
   
-  // Fetch professionals
   useEffect(() => {
     const fetchProfessionals = async () => {
       try {
@@ -100,7 +98,6 @@ const HouseDetailPage = () => {
     fetchProfessionals();
   }, []);
   
-  // Request house
   const handleRequestHouse = async () => {
     if (!user) {
       navigate('/login');
@@ -129,7 +126,6 @@ const HouseDetailPage = () => {
     }
   };
   
-  // Request consultation
   const handleRequestConsultation = async (professionalId: string) => {
     if (!user) {
       navigate('/login');
@@ -162,7 +158,6 @@ const HouseDetailPage = () => {
     }
   };
   
-  // Show appropriate professionals based on selected consultation type
   const getProfessionalsByType = () => {
     switch (consultationType) {
       case 'engineer':
@@ -224,12 +219,10 @@ const HouseDetailPage = () => {
             </Link>
           </div>
           
-          {/* House Images */}
           <div className="mb-8">
-            <HouseCarousel images={house.images} />
+            <HouseCarousel images={house.images} title={house.title} />
           </div>
           
-          {/* House Details */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
             <div className="lg:col-span-2">
               <h1 className="text-3xl font-serif mb-2">{house.title}</h1>
@@ -293,7 +286,6 @@ const HouseDetailPage = () => {
             </div>
           </div>
           
-          {/* Consultation Section */}
           <Card className="mb-12">
             <CardHeader>
               <CardTitle>Consult a Professional</CardTitle>

@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { User, ChatMessage } from '@/types';
+import { User, ChatMessage, ConsultationRequest } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,18 +11,25 @@ import { format } from 'date-fns';
 interface ChatInterfaceProps {
   messages: ChatMessage[];
   currentUser: User;
-  professional: User;
+  consultation: ConsultationRequest;
   onSendMessage: (content: string) => void;
+  onStatusChange?: (status: 'accepted' | 'completed' | 'rejected') => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
   messages,
   currentUser,
-  professional,
+  consultation,
   onSendMessage,
+  onStatusChange,
 }) => {
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Determine the other person in the conversation (professional or user)
+  const otherPerson = currentUser._id === consultation.userId 
+    ? { _id: consultation.professionalId } 
+    : { _id: consultation.userId };
   
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,16 +47,44 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   return (
     <Card className="flex flex-col h-[600px] shadow-sm">
       <CardHeader className="border-b bg-card">
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={professional.profileImage} />
-            <AvatarFallback>{professional.fullName.substring(0, 2)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="font-medium">{professional.fullName}</h3>
-            <p className="text-xs text-muted-foreground">{professional.degree}</p>
-            <p className="text-xs text-muted-foreground capitalize">{professional.role}</p>
+        <div className="flex items-center gap-3 justify-between">
+          <div className="flex items-center gap-3">
+            {/* This will be replaced by the actual professional/user details now rendered in ProfessionalDetails component */}
+            <h3 className="font-medium">Consultation</h3>
+            <p className="text-xs text-muted-foreground capitalize">
+              {consultation.status}
+            </p>
           </div>
+          
+          {/* Status change buttons for professionals or users based on current status */}
+          {onStatusChange && currentUser._id !== consultation.userId && consultation.status === 'pending' && (
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                onClick={() => onStatusChange('accepted')}
+                variant="outline"
+              >
+                Accept
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={() => onStatusChange('rejected')}
+                variant="destructive"
+              >
+                Decline
+              </Button>
+            </div>
+          )}
+          
+          {onStatusChange && consultation.status === 'accepted' && (
+            <Button 
+              size="sm" 
+              onClick={() => onStatusChange('completed')}
+              variant="outline"
+            >
+              Mark as Completed
+            </Button>
+          )}
         </div>
       </CardHeader>
       
@@ -57,13 +92,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground text-sm">
-              Start a conversation with {professional.fullName}
+              Start a conversation
             </p>
           </div>
         ) : (
           messages.map((message) => {
             const isCurrentUser = message.senderId === currentUser._id;
-            const sender = isCurrentUser ? currentUser : professional;
             
             return (
               <div
@@ -72,8 +106,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               >
                 {!isCurrentUser && (
                   <Avatar className="h-8 w-8 mr-2 mt-1">
-                    <AvatarImage src={professional.profileImage} />
-                    <AvatarFallback>{professional.fullName.substring(0, 2)}</AvatarFallback>
+                    <AvatarFallback>{otherPerson._id.substring(0, 2)}</AvatarFallback>
                   </Avatar>
                 )}
                 <div
@@ -89,7 +122,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       {format(new Date(message.timestamp), 'h:mm a, MMM d')}
                     </p>
                     <p className="text-xs opacity-70 ml-2">
-                      {isCurrentUser ? 'You' : sender.fullName}
+                      {isCurrentUser ? 'You' : ''}
                     </p>
                   </div>
                 </div>
