@@ -72,7 +72,7 @@ const AdminDashboard = () => {
       
       setHouses(prevHouses =>
         prevHouses.map(house =>
-          house.id === houseId ? updatedHouse : house
+          house._id === houseId ? updatedHouse : house
         )
       );
       
@@ -97,7 +97,7 @@ const AdminDashboard = () => {
       await deleteHouse(houseToDelete);
       
       setHouses(prevHouses =>
-        prevHouses.filter(house => house.id !== houseToDelete)
+        prevHouses.filter(house => house._id !== houseToDelete)
       );
       
       toast({
@@ -168,7 +168,7 @@ const AdminDashboard = () => {
                   </TableHeader>
                   <TableBody>
                     {houses.map(house => (
-                      <TableRow key={house.id}>
+                      <TableRow key={house._id}>
                         <TableCell className="font-medium">{house.title}</TableCell>
                         <TableCell>
                           {house.houseType === 'single' && 'Single Story'}
@@ -182,13 +182,13 @@ const AdminDashboard = () => {
                           <Switch
                             checked={house.available}
                             onCheckedChange={(checked) => 
-                              handleAvailabilityChange(house.id, checked)
+                              handleAvailabilityChange(house._id, checked)
                             }
                           />
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Link to={`/admin/edit-house/${house.id}`}>
+                            <Link to={`/admin/edit-house/${house._id}`}>
                               <Button size="icon" variant="ghost">
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -196,7 +196,7 @@ const AdminDashboard = () => {
                             <Button 
                               size="icon" 
                               variant="ghost"
-                              onClick={() => confirmDelete(house.id)}
+                              onClick={() => confirmDelete(house._id)}
                             >
                               <Trash className="h-4 w-4" />
                             </Button>

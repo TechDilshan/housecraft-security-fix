@@ -281,14 +281,14 @@ const HouseDetailPage = () => {
                         Request This House
                       </Button>
                     )}
-                    <Button 
+                    {/* <Button 
                       className="w-full mb-4" 
                       size="lg"
                       onClick={handleContactAgent}
                       disabled={!user}
                     >
                       Contact Agent
-                    </Button>
+                    </Button> */}
                   </>
                 ) : (
                   <Dialog open={open} onOpenChange={setOpen}>
