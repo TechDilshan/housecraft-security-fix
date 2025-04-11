@@ -133,12 +133,14 @@ const ProfessionalDashboard = () => {
             : request.userId;
           
           const userFullName = userDetails ? userDetails.fullName : 'Unknown User';
+          const userProfilePic = userDetails ? userDetails.profileImage : '';
           return (
             <Card key={request._id} className="shadow-sm hover:shadow-md transition-shadow duration-300">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
                     <Avatar>
+                    <AvatarImage src={userProfilePic} />
                       <AvatarFallback>
                         {userFullName.substring(0, 2) || 'NA'}
                       </AvatarFallback>

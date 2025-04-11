@@ -103,6 +103,14 @@ const UserRequestsPage = () => {
             : null;
             
           const isFromProfessional = latestMessage && latestMessage.senderId === request.professionalId;
+
+          const profDetails = 
+          typeof request.professionalId === 'string'
+            ? JSON.parse(request.professionalId) 
+            : request.professionalId;
+          
+          const profFullName = profDetails ? profDetails.fullName : 'Unknown User';
+          const profPic = profDetails ? profDetails.profileImage : '';
           
           return (
             <Card key={request._id} className="shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -110,14 +118,14 @@ const UserRequestsPage = () => {
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={PROFESSIONALS[request.professionalId]?.profileImage} />
+                      <AvatarImage src={profPic} />
                       <AvatarFallback>
-                        {PROFESSIONALS[request.professionalId]?.fullName.substring(0, 2) || 'NA'}
+                        {profFullName.substring(0, 2) || 'NA'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <CardTitle className="text-lg">
-                        {PROFESSIONALS[request.professionalId]?.fullName || 'Professional'}
+                        {profFullName}
                       </CardTitle>
                       <CardDescription className="capitalize">
                         {PROFESSIONALS[request.professionalId]?.role || request.consultationType}
@@ -143,7 +151,7 @@ const UserRequestsPage = () => {
                               </AvatarFallback>
                             </>
                           ) : (
-                            <AvatarFallback>You</AvatarFallback>
+                            null
                           )}
                         </Avatar>
                         <span className="text-xs font-medium">
