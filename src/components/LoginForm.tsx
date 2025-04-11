@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +12,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { User } from '@/types';
 
 const LoginForm = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   
   const [email, setEmail] = useState('');
@@ -28,30 +29,37 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
-      // Removed role parameter from login
-      const result = await login(email, password);
+      await login(email, password);
       
-      // Get user role from the response and redirect accordingly
-      if (result && result.role) {
-        // Redirect based on role
-        switch(result.role) {
-          case 'admin':
-            navigate('/admin');
-            break;
-          case 'engineer':
-            navigate('/engineer-dashboard');
-            break;
-          case 'architect':
-            navigate('/architect-dashboard');
-            break;
-          case 'vastu':
-            navigate('/vastu-dashboard');
-            break;
-          default:
-            navigate('/');
+      // Get the redirect path from location state or use role-based redirect
+      const from = location.state?.from?.pathname || '/';
+      
+      if (from === '/login') {
+        // If redirected from login page itself, use role-based redirect
+        const user = JSON.parse(localStorage.getItem('user') || '{}') as User;
+        if (user && user.role) {
+          switch(user.role) {
+            case 'admin':
+              navigate('/admin');
+              break;
+            case 'engineer':
+              navigate('/engineer-dashboard');
+              break;
+            case 'architect':
+              navigate('/architect-dashboard');
+              break;
+            case 'vastu':
+              navigate('/vastu-dashboard');
+              break;
+            default:
+              navigate('/');
+          }
+        } else {
+          navigate('/');
         }
       } else {
-        navigate('/');
+        // Redirect to the page user was trying to access
+        navigate(from);
       }
       
       toast({

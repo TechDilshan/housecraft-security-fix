@@ -1,10 +1,10 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Pages
 import Index from "./pages/Index";
@@ -37,16 +37,58 @@ const App = () => (
             <Route path="/houses/:id" element={<HouseDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/my-requests" element={<UserRequestsPage />} />
-            <Route path="/engineer-dashboard" element={<ProfessionalDashboard />} />
-            <Route path="/architect-dashboard" element={<ProfessionalDashboard />} />
-            <Route path="/vastu-dashboard" element={<ProfessionalDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/user-requests" element={<AdminUserRequestsPage />} />
-            <Route path="/admin/add-house" element={<AddHousePage />} />
-            <Route path="/admin/edit-house/:id" element={<EditHousePage />} />
-            <Route path="/chat/:_id" element={<ChatPage />} />
+            
+            {/* Protected Routes */}
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/my-requests" element={
+              <ProtectedRoute>
+                <UserRequestsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/engineer-dashboard" element={
+              <ProtectedRoute allowedRoles={['engineer']}>
+                <ProfessionalDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/architect-dashboard" element={
+              <ProtectedRoute allowedRoles={['architect']}>
+                <ProfessionalDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/vastu-dashboard" element={
+              <ProtectedRoute allowedRoles={['vastu']}>
+                <ProfessionalDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/user-requests" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminUserRequestsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/add-house" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AddHousePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/edit-house/:id" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <EditHousePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/chat/:_id" element={
+              <ProtectedRoute>
+                <ChatPage />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
