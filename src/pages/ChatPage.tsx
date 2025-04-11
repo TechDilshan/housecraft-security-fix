@@ -166,6 +166,53 @@ const ChatPage = () => {
             </Link>
           </div>
 
+          {user.role === 'user' && (
+            <Card className="mt-8 shadow-sm">
+              <CardHeader>
+                <CardTitle>Professional Details</CardTitle>
+                <CardDescription>
+                  Information about your consultant
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col md:flex-row items-start gap-6">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={professionalImage} />
+                    <AvatarFallback className="text-lg">{professionalName.substring(0, 2)}</AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-lg font-medium">{professionalName}</h3>
+                      <p className="text-muted-foreground capitalize">{professional?.role || 'Professional'}</p>
+                    </div>
+                    
+                    {professional?.email && (
+                      <div>
+                        <p className="text-sm font-medium">Email</p>
+                        <p className="text-muted-foreground">{professional.email}</p>
+                      </div>
+                    )}
+                    
+                    {professional?.degree && (
+                      <div>
+                        <p className="text-sm font-medium">Qualifications</p>
+                        <p className="text-muted-foreground">{professional.degree}</p>
+                      </div>
+                    )}
+                    
+                    {professional?.phoneNumber && (
+                      <div>
+                        <p className="text-sm font-medium">Contact</p>
+                        <p className="text-muted-foreground">{professional.phoneNumber}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <ChatInterface
             messages={sortedMessages}
             currentUser={user}
@@ -177,50 +224,7 @@ const ChatPage = () => {
             onSendMessage={handleSendMessage}
           />
           
-          <Card className="mt-8 shadow-sm">
-            <CardHeader>
-              <CardTitle>Professional Details</CardTitle>
-              <CardDescription>
-                Information about your consultant
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row items-start gap-6">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={professionalImage} />
-                  <AvatarFallback className="text-lg">{professionalName.substring(0, 2)}</AvatarFallback>
-                </Avatar>
-                
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-lg font-medium">{professionalName}</h3>
-                    <p className="text-muted-foreground capitalize">{professional?.role || 'Professional'}</p>
-                  </div>
-                  
-                  {professional?.email && (
-                    <div>
-                      <p className="text-sm font-medium">Email</p>
-                      <p className="text-muted-foreground">{professional.email}</p>
-                    </div>
-                  )}
-                  
-                  {professional?.degree && (
-                    <div>
-                      <p className="text-sm font-medium">Qualifications</p>
-                      <p className="text-muted-foreground">{professional.degree}</p>
-                    </div>
-                  )}
-                  
-                  {professional?.phoneNumber && (
-                    <div>
-                      <p className="text-sm font-medium">Contact</p>
-                      <p className="text-muted-foreground">{professional.phoneNumber}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          
         </div>
       </main>
 
