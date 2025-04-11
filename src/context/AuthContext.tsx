@@ -29,7 +29,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(userData);
         } catch (error) {
           console.error('Error getting user profile:', error);
-          // Don't remove token on error - this prevents logout on page refresh if API is temporarily unavailable
+          // If there's an error with the token, remove it to prevent login loops
+          if ((error as any)?.response?.status === 401) {
+            localStorage.removeItem('token');
+          }
         }
       }
       
@@ -45,6 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const userData = await authService.login(email, password);
       setUser(userData);
+      return userData; // Return the user data to determine redirect
     } catch (error) {
       console.error('Login error:', error);
       throw error;
