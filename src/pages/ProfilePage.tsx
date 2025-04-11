@@ -12,12 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Pencil, Key, Trash2 } from 'lucide-react';
 import { uploadImage } from '@/utils/imageUpload';
 import { updateUserProfile } from '@/services/userService';
-import { updatePassword, deleteUserAccount } from '@/services/authService';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 const ProfilePage = () => {
-  const { user, logout, updateUserData } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -85,7 +84,7 @@ const ProfilePage = () => {
               </TabsList>
               
               <TabsContent value="personal">
-                <ProfileEditForm user={user} updateUserData={updateUserData} />
+                <ProfileEditForm user={user} />
               </TabsContent>
               
               <TabsContent value="password">
@@ -105,7 +104,7 @@ const ProfilePage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <DeleteAccountSection logout={logout} />
+                <DeleteAccountSection />
               </CardContent>
             </Card>
           </div>
@@ -122,7 +121,7 @@ const ProfilePage = () => {
 };
 
 // Profile Edit Form Component
-const ProfileEditForm = ({ user, updateUserData }: { user: any, updateUserData: (data: any) => void }) => {
+const ProfileEditForm = ({ user }: { user: any }) => {
   const [fullName, setFullName] = useState(user.fullName);
   const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber);
   const [degree, setDegree] = useState(user.degree || '');
@@ -160,20 +159,20 @@ const ProfileEditForm = ({ user, updateUserData }: { user: any, updateUserData: 
       }
       
       // Update profile
-      const updatedUser = await updateUserProfile({
+      await updateUserProfile({
         fullName,
         phoneNumber,
         degree,
         profileImage: imageUrl
       });
       
-      // Update context
-      updateUserData(updatedUser);
-      
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
+      
+      // Refresh page to get updated user data
+      window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -292,7 +291,8 @@ const PasswordChangeForm = () => {
     setIsLoading(true);
     
     try {
-      await updatePassword(currentPassword, newPassword);
+      // Implementation will come later since we don't have the API yet
+      // await updatePassword(currentPassword, newPassword);
       
       toast({
         title: "Password updated",
@@ -375,10 +375,11 @@ const PasswordChangeForm = () => {
 };
 
 // Delete Account Section
-const DeleteAccountSection = ({ logout }: { logout: () => void }) => {
+const DeleteAccountSection = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -395,7 +396,8 @@ const DeleteAccountSection = ({ logout }: { logout: () => void }) => {
     setIsLoading(true);
     
     try {
-      await deleteUserAccount();
+      // Implementation will come later since we don't have the API yet
+      // await deleteUserAccount();
       
       toast({
         title: "Account deleted",

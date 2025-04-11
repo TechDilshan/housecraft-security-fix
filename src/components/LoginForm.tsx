@@ -28,15 +28,36 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
-      await login(email, password);
+      // Removed role parameter from login
+      const result = await login(email, password);
+      
+      // Get user role from the response and redirect accordingly
+      if (result && result.role) {
+        // Redirect based on role
+        switch(result.role) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'engineer':
+            navigate('/engineer-dashboard');
+            break;
+          case 'architect':
+            navigate('/architect-dashboard');
+            break;
+          case 'vastu':
+            navigate('/vastu-dashboard');
+            break;
+          default:
+            navigate('/');
+        }
+      } else {
+        navigate('/');
+      }
       
       toast({
         title: 'Login successful',
         description: 'Welcome back!',
       });
-      
-      // The redirect will happen automatically based on user role in AuthContext
-      // No need to handle it here
     } catch (error) {
       toast({
         title: 'Login failed',

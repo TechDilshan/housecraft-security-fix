@@ -153,7 +153,7 @@ const Navbar = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem>
                   <Link to="/profile" className="flex w-full">Profile</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={logout}>

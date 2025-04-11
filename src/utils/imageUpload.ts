@@ -12,7 +12,7 @@ export const uploadImage = async (file: File): Promise<string> => {
   try {
     // Create a unique file name
     const fileName = `${uuidv4()}-${file.name}`;
-    const storageRef = ref(storage, `profile-images/${fileName}`);
+    const storageRef = ref(storage, `house-images/${fileName}`);
     
     // Upload the file
     const snapshot = await uploadBytes(storageRef, file);
@@ -38,28 +38,5 @@ export const uploadMultipleImages = async (files: File[]): Promise<string[]> => 
   } catch (error) {
     console.error("Error uploading multiple images:", error);
     throw new Error("Failed to upload one or more images");
-  }
-};
-
-/**
- * Uploads a house image to Firebase storage (in the house-images folder)
- * @param file Image file to upload
- * @returns Promise with the download URL
- */
-export const uploadHouseImage = async (file: File): Promise<string> => {
-  try {
-    // Create a unique file name
-    const fileName = `${uuidv4()}-${file.name}`;
-    const storageRef = ref(storage, `house-images/${fileName}`);
-    
-    // Upload the file
-    const snapshot = await uploadBytes(storageRef, file);
-    
-    // Get download URL
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
-  } catch (error) {
-    console.error("Error uploading house image:", error);
-    throw new Error("Failed to upload house image");
   }
 };
