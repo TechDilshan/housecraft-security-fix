@@ -58,3 +58,7 @@ export const createHouseRequest = async (houseId: string) => {
   return response.data;
 };
 
+export const updateHouseRequestStatus = async (requestId: string, status: 'pending' | 'approved' | 'rejected') => {
+  const response = await api.put(`/houses/requests/${requestId}`, { status });
+  return response.data;
+};

@@ -1,12 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { getReqHouseRequests } from '@/services/houseService';
+import { getReqHouseRequests, updateHouseRequestStatus } from '@/services/houseService';
 import {
   Card,
+
   CardContent,
   CardDescription,
   CardHeader,
@@ -70,6 +70,44 @@ const AdminUserRequestsPage = () => {
     
     fetchRequests();
   }, [user, toast]);
+  
+  const handleApprove = async (requestId: string) => {
+    try {
+      await updateHouseRequestStatus(requestId, 'approved');
+      toast({
+        title: 'Success',
+        description: 'Request approved successfully',
+      });
+      // Automatically update the requests state after approval
+      setRequests(requests.map(request => request._id === requestId ? { ...request, status: 'approved' } : request));
+    } catch (error) {
+      console.error('Error approving request:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not approve request',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleReject = async (requestId: string) => {
+    try {
+      await updateHouseRequestStatus(requestId, 'rejected');
+      toast({
+        title: 'Success',
+        description: 'Request rejected successfully',
+      });
+      // Automatically update the requests state after rejection
+      setRequests(requests.map(request => request._id === requestId ? { ...request, status: 'rejected' } : request));
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not reject request',
+        variant: 'destructive',
+      });
+    }
+  };
   
   if (!user || user.role !== 'admin') {
     return <Navigate to="/login" />;
@@ -143,10 +181,14 @@ const AdminUserRequestsPage = () => {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Button size="sm" variant={request.status === 'approved' ? 'outline' : 'default'} 
-                              className={request.status === 'approved' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}>
+                              className={request.status === 'approved' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                              onClick={() => handleApprove(request._id)}
+                            >
                               {request.status === 'approved' ? 'Approved' : 'Approve'}
                             </Button>
-                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-800">
+                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-800"
+                              onClick={() => handleReject(request._id)}
+                            >
                               Reject
                             </Button>
                           </div>
