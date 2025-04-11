@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
 import * as authService from '../services/authService';
 
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Check for saved token on component mount
   useEffect(() => {
@@ -45,6 +47,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const userData = await authService.login(email, password);
       setUser(userData);
+      
+      // Handle role-based redirects
+      if (userData.role) {
+        switch(userData.role) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'engineer':
+            navigate('/engineer-dashboard');
+            break;
+          case 'architect':
+            navigate('/architect-dashboard');
+            break;
+          case 'vastu':
+            navigate('/vastu-dashboard');
+            break;
+          default:
+            navigate('/');
+        }
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -59,6 +83,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const newUser = await authService.register(userData, password);
       setUser(newUser);
+      
+      // Redirect based on role after signup
+      if (newUser.role) {
+        switch(newUser.role) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'engineer':
+            navigate('/engineer-dashboard');
+            break;
+          case 'architect':
+            navigate('/architect-dashboard');
+            break;
+          case 'vastu':
+            navigate('/vastu-dashboard');
+            break;
+          default:
+            navigate('/');
+        }
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -71,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     authService.logout();
     setUser(null);
+    navigate('/login');
   };
 
   // Update user data function

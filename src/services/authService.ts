@@ -15,7 +15,7 @@ export const register = async (userData: Omit<User, 'id'>, password: string) => 
   return response.data;
 };
 
-// Login user - remove role parameter
+// Login user
 export const login = async (email: string, password: string) => {
   const response = await api.post('/auth/login', {
     email,
