@@ -1,6 +1,6 @@
-
 import api from './api';
 import { House } from '@/types';
+import { uploadMultipleImages } from '@/utils/imageUpload';
 
 // Get all houses with optional filters
 export const getHouses = async (filters = {}) => {
@@ -22,14 +22,29 @@ export const getHouseById = async (id: string) => {
   return response.data;
 };
 
-// Create new house (admin only)
-export const createHouse = async (houseData: Omit<House, '_id'>) => {
+// Create new house with image upload (admin only)
+export const createHouse = async (houseData: Omit<House, '_id'>, imageFiles?: File[]) => {
+  if (imageFiles && imageFiles.length > 0) {
+    const imageUrls = await uploadMultipleImages(imageFiles);
+    houseData.images = imageUrls;
+  }
+  
   const response = await api.post('/houses', houseData);
   return response.data;
 };
 
-// Update house (admin only)
-export const updateHouse = async (id: string, updates: Partial<House>) => {
+// Update house with image upload (admin only)
+export const updateHouse = async (id: string, updates: Partial<House>, newImageFiles?: File[]) => {
+  if (newImageFiles && newImageFiles.length > 0) {
+    const newImageUrls = await uploadMultipleImages(newImageFiles);
+    
+    if (updates.images) {
+      updates.images = [...updates.images, ...newImageUrls];
+    } else {
+      updates.images = newImageUrls;
+    }
+  }
+  
   const response = await api.put(`/houses/${id}`, updates);
   return response.data;
 };

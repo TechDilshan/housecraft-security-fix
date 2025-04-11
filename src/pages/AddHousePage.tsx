@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
-import { HouseType } from '@/types';
 import { createHouse } from '@/services/houseService';
 import {
   Card,
@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Upload, X, Loader2 } from 'lucide-react';
 import { House } from '@/types';
 
 // Form validation schema
@@ -45,7 +45,7 @@ const formSchema = z.object({
     message: "Price must be a positive number",
   }),
   houseType: z.enum(['single', 'two', 'three', 'box'] as const),
-  images: z.array(z.string()).min(1, "At least one image URL is required"),
+  images: z.array(z.string()).default([]),
   available: z.boolean().default(true),
 });
 
@@ -57,6 +57,9 @@ const AddHousePage = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -86,7 +89,9 @@ const AddHousePage = () => {
         available: values.available,
       };
 
-      await createHouse(houseData);
+      // Submit form with uploaded files
+      await createHouse(houseData, uploadedFiles);
+      
       toast({
         title: "Success",
         description: "House listing added successfully",
@@ -116,6 +121,36 @@ const AddHousePage = () => {
   const removeImage = (index: number) => {
     const images = form.getValues('images').filter((_, i) => i !== index);
     form.setValue('images', images);
+  };
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files);
+      setUploadedFiles(prev => [...prev, ...selectedFiles]);
+      
+      // Display preview images
+      selectedFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            // Add preview URLs to form (these will be replaced with Firebase URLs on submit)
+            form.setValue('images', [...form.getValues('images'), event.target.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  // Remove uploaded file
+  const removeFile = (index: number) => {
+    const updatedFiles = [...uploadedFiles];
+    updatedFiles.splice(index, 1);
+    setUploadedFiles(updatedFiles);
+    
+    // Also remove from preview
+    removeImage(index);
   };
 
   // If user is not admin, redirect to login
@@ -151,6 +186,7 @@ const AddHousePage = () => {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
+                    {/* Title field */}
                     <FormField
                       control={form.control}
                       name="title"
@@ -165,6 +201,7 @@ const AddHousePage = () => {
                       )}
                     />
 
+                    {/* Location field */}
                     <FormField
                       control={form.control}
                       name="location"
@@ -179,6 +216,7 @@ const AddHousePage = () => {
                       )}
                     />
 
+                    {/* Price field */}
                     <FormField
                       control={form.control}
                       name="price"
@@ -197,6 +235,7 @@ const AddHousePage = () => {
                       )}
                     />
 
+                    {/* House Type field */}
                     <FormField
                       control={form.control}
                       name="houseType"
@@ -225,6 +264,7 @@ const AddHousePage = () => {
                     />
                   </div>
 
+                  {/* Description field */}
                   <FormField
                     control={form.control}
                     name="description"
@@ -243,6 +283,7 @@ const AddHousePage = () => {
                     )}
                   />
 
+                  {/* Image upload section */}
                   <div className="space-y-4">
                     <FormField
                       control={form.control}
@@ -250,26 +291,49 @@ const AddHousePage = () => {
                       render={() => (
                         <FormItem>
                           <FormLabel>Images</FormLabel>
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Image URL"
-                              value={imageUrl}
-                              onChange={(e) => setImageUrl(e.target.value)}
-                              className="flex-1"
+                          
+                          {/* File upload button */}
+                          <div className="flex items-center gap-4">
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              className="hidden"
+                              ref={fileInputRef}
+                              onChange={handleFileChange}
                             />
                             <Button 
                               type="button" 
-                              onClick={addImage}
-                              variant="secondary"
+                              variant="outline" 
+                              onClick={() => fileInputRef.current?.click()}
+                              className="flex gap-2"
                             >
-                              Add Image
+                              <Upload size={16} />
+                              Upload Images
                             </Button>
+                            
+                            {/* External URL option */}
+                            <div className="flex gap-2 flex-1">
+                              <Input
+                                placeholder="Or add image URL"
+                                value={imageUrl}
+                                onChange={(e) => setImageUrl(e.target.value)}
+                              />
+                              <Button 
+                                type="button" 
+                                onClick={addImage}
+                                variant="secondary"
+                              >
+                                Add URL
+                              </Button>
+                            </div>
                           </div>
                           <FormMessage />
                           
+                          {/* Display added images */}
                           {form.getValues('images').length > 0 && (
                             <div className="mt-4">
-                              <p className="text-sm font-medium mb-2">Added Images:</p>
+                              <p className="text-sm font-medium mb-2">Image Previews:</p>
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {form.getValues('images').map((url, index) => (
                                   <div 
@@ -287,13 +351,10 @@ const AddHousePage = () => {
                                     />
                                     <button
                                       type="button"
-                                      onClick={() => removeImage(index)}
+                                      onClick={() => removeFile(index)}
                                       className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                     >
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                      </svg>
+                                      <X size={16} />
                                     </button>
                                   </div>
                                 ))}
@@ -305,13 +366,19 @@ const AddHousePage = () => {
                     />
                   </div>
 
+                  {/* Submit button */}
                   <div className="flex justify-end">
                     <Button 
                       type="submit" 
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || uploadingImages}
                       className="w-full sm:w-auto"
                     >
-                      {isSubmitting ? "Adding..." : "Add House"}
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Adding...
+                        </>
+                      ) : "Add House"}
                     </Button>
                   </div>
                 </form>
