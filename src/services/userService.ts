@@ -19,3 +19,9 @@ export const updateUserProfile = async (updates: Partial<User>) => {
   const response = await api.put('/users/profile', updates);
   return response.data;
 };
+
+// Delete user account
+export const deleteUser = async () => {
+  const response = await api.delete('/users/profile');
+  return response.data;
+};

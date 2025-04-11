@@ -19,6 +19,7 @@ import AdminUserRequestsPage from "./pages/AdminUserRequestsPage";
 import AddHousePage from "./pages/AddHousePage";
 import EditHousePage from "./pages/EditHousePage";
 import ChatPage from "./pages/ChatPage";
+import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/houses/:id" element={<HouseDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/my-requests" element={<UserRequestsPage />} />
             <Route path="/engineer-dashboard" element={<ProfessionalDashboard />} />
             <Route path="/architect-dashboard" element={<ProfessionalDashboard />} />

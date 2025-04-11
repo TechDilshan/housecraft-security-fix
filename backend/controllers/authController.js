@@ -1,3 +1,4 @@
+
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 
@@ -47,13 +48,13 @@ export const register = async (req, res) => {
   }
 };
 
-// Login user
+// Login user - updated to not require role
 export const login = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
 
-    // Find user by email and role
-    const user = await User.findOne({ email, role });
+    // Find user by email only - no role filter
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -91,6 +92,47 @@ export const getProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Update password
+export const updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Verify current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+    
+    // Update password
+    user.password = newPassword;
+    await user.save();
+    
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Delete account
+export const deleteAccount = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    await User.deleteOne({ _id: user._id });
+    res.json({ message: 'Account deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

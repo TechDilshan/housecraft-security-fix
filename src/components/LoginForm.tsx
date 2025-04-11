@@ -12,15 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { UserRole } from '@/types';
 
 const LoginForm = () => {
   const { login } = useAuth();
@@ -29,7 +21,6 @@ const LoginForm = () => {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('user');
   const [isLoading, setIsLoading] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,24 +28,30 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
-      await login(email, password, role);
+      // Removed role parameter from login
+      const result = await login(email, password);
       
-      // Redirect based on role
-      switch(role) {
-        case 'admin':
-          navigate('/admin');
-          break;
-        case 'engineer':
-          navigate('/engineer-dashboard');
-          break;
-        case 'architect':
-          navigate('/architect-dashboard');
-          break;
-        case 'vastu':
-          navigate('/vastu-dashboard');
-          break;
-        default:
-          navigate('/');
+      // Get user role from the response and redirect accordingly
+      if (result && result.role) {
+        // Redirect based on role
+        switch(result.role) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'engineer':
+            navigate('/engineer-dashboard');
+            break;
+          case 'architect':
+            navigate('/architect-dashboard');
+            break;
+          case 'vastu':
+            navigate('/vastu-dashboard');
+            break;
+          default:
+            navigate('/');
+        }
+      } else {
+        navigate('/');
       }
       
       toast({
@@ -108,24 +105,6 @@ const LoginForm = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Role
-            </label>
-            <Select onValueChange={(value) => setRole(value as UserRole)} defaultValue={role}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">Normal User</SelectItem>
-                <SelectItem value="engineer">Engineer</SelectItem>
-                <SelectItem value="architect">Architect</SelectItem>
-                <SelectItem value="vastu">Vastu Expert</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
         

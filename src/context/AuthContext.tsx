@@ -6,9 +6,10 @@ import * as authService from '../services/authService';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string, role: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   signup: (userData: Omit<User, 'id'>, password: string) => Promise<void>;
   logout: () => void;
+  updateUserData: (userData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(userData);
         } catch (error) {
           console.error('Error getting user profile:', error);
-          localStorage.removeItem('token');
+          // Don't remove token on error - this prevents logout on page refresh if API is temporarily unavailable
         }
       }
       
@@ -38,11 +39,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkLoggedIn();
   }, []);
 
-  // Login function
-  const login = async (email: string, password: string, role: UserRole) => {
+  // Login function - removed role parameter
+  const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const userData = await authService.login(email, password, role);
+      const userData = await authService.login(email, password);
       setUser(userData);
     } catch (error) {
       console.error('Login error:', error);
@@ -72,8 +73,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  // Update user data function
+  const updateUserData = (userData: Partial<User>) => {
+    if (user) {
+      setUser({
+        ...user,
+        ...userData
+      });
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUserData }}>
       {children}
     </AuthContext.Provider>
   );

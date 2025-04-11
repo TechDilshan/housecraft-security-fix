@@ -1,16 +1,17 @@
+
 import express from 'express';
-import { register, login, getProfile } from '../controllers/authController.js';
+import { register, login, getProfile, updatePassword, deleteAccount } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Register new user
+// Public routes
 router.post('/register', register);
-
-// Login user
 router.post('/login', login);
 
-// Get user profile (protected route)
+// Protected routes
 router.get('/profile', protect, getProfile);
+router.put('/password', protect, updatePassword);
+router.delete('/account', protect, deleteAccount);
 
 export default router;

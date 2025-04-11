@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -83,6 +84,9 @@ const Navbar = () => {
                 </Link>
                 {user && (
                   <>
+                    <Link to="/profile" className="text-sm font-medium hover:text-accent transition-colors py-2">
+                      My Profile
+                    </Link>
                     {user.role === 'admin' && (
                       <Link to="/admin" className="text-sm font-medium hover:text-accent transition-colors py-2">
                         Admin Dashboard
@@ -135,7 +139,14 @@ const Navbar = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
+                  {user.profileImage ? (
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.profileImage} alt={user.fullName} />
+                      <AvatarFallback>{user.fullName.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <User className="h-4 w-4" />
+                  )}
                   <span>{user.fullName}</span>
                 </Button>
               </DropdownMenuTrigger>
