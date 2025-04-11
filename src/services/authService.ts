@@ -15,7 +15,7 @@ export const register = async (userData: Omit<User, 'id'>, password: string) => 
   return response.data;
 };
 
-// Login user
+// Login user - remove role parameter
 export const login = async (email: string, password: string) => {
   const response = await api.post('/auth/login', {
     email,
@@ -51,7 +51,5 @@ export const updatePassword = async (currentPassword: string, newPassword: strin
 // Delete account
 export const deleteUserAccount = async () => {
   const response = await api.delete('/auth/account');
-  // Clear token after account deletion
-  localStorage.removeItem('token');
   return response.data;
 };

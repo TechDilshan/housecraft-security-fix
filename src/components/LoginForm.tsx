@@ -28,10 +28,12 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
+      // Removed role parameter from login
       const result = await login(email, password);
       
-      // Redirect based on role from the login response
+      // Get user role from the response and redirect accordingly
       if (result && result.role) {
+        // Redirect based on role
         switch(result.role) {
           case 'admin':
             navigate('/admin');
