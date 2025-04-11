@@ -42,6 +42,13 @@ const PROFESSIONALS: Record<string, User> = {
   },
 };
 
+// Default user data to ensure required fields for User type are present
+const DEFAULT_USER_DATA: Partial<User> = {
+  email: '',
+  phoneNumber: '',
+  profileImage: '',
+};
+
 const ChatPage = () => {
   const { _id } = useParams<{ _id: string }>();
   const { user } = useAuth();
@@ -144,11 +151,17 @@ const ChatPage = () => {
       ? PROFESSIONALS[consultation.professionalId]
       : consultation.professionalId;
 
-  // Extract client/user info
-  const client = 
-    typeof consultation.userId === 'string'
-      ? { _id: consultation.userId, fullName: 'Client', role: 'user' as const }
-      : consultation.userId;
+  // Create a complete User object for the client with all required properties
+  const client: User = typeof consultation.userId === 'string'
+    ? {
+        _id: consultation.userId,
+        fullName: 'Client',
+        role: 'user',
+        email: '',
+        phoneNumber: '',
+        ...DEFAULT_USER_DATA,
+      }
+    : consultation.userId;
   
   const returnPath = user.role === 'user' ? '/my-requests' : `/${user.role}-dashboard`;
 
