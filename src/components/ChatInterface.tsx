@@ -13,6 +13,7 @@ interface ChatInterfaceProps {
   currentUser: User;
   professional: User;
   onSendMessage: (content: string) => void;
+  otherUser?: User; // Add otherUser prop to handle both professional and user view
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -20,9 +21,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   currentUser,
   professional,
   onSendMessage,
+  otherUser,
 }) => {
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Determine the chat partner based on current user role
+  const chatPartner = currentUser.role === 'user' ? professional : otherUser || professional;
   
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,13 +47,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <CardHeader className="border-b bg-card">
         <div className="flex items-center gap-3">
           <Avatar>
-            <AvatarImage src={professional.profileImage} />
-            <AvatarFallback>{professional.fullName.substring(0, 2)}</AvatarFallback>
+            <AvatarImage src={chatPartner.profileImage} />
+            <AvatarFallback>{chatPartner.fullName.substring(0, 2)}</AvatarFallback>
           </Avatar>
           <div>
-            <h3 className="font-medium">{professional.fullName}</h3>
-            <p className="text-xs text-muted-foreground">{professional.degree}</p>
-            <p className="text-xs text-muted-foreground capitalize">{professional.role}</p>
+            <h3 className="font-medium">{chatPartner.fullName}</h3>
+            {chatPartner.degree && <p className="text-xs text-muted-foreground">{chatPartner.degree}</p>}
+            <p className="text-xs text-muted-foreground capitalize">{chatPartner.role}</p>
           </div>
         </div>
       </CardHeader>
@@ -57,13 +62,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground text-sm">
-              Start a conversation with {professional.fullName}
+              Start a conversation with {chatPartner.fullName}
             </p>
           </div>
         ) : (
           messages.map((message) => {
             const isCurrentUser = message.senderId === currentUser._id;
-            const sender = isCurrentUser ? currentUser : professional;
+            // Determine the correct sender for avatar display
+            const sender = isCurrentUser ? currentUser : chatPartner;
             
             return (
               <div
@@ -72,8 +78,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               >
                 {!isCurrentUser && (
                   <Avatar className="h-8 w-8 mr-2 mt-1">
-                    <AvatarImage src={professional.profileImage} />
-                    <AvatarFallback>{professional.fullName.substring(0, 2)}</AvatarFallback>
+                    <AvatarImage src={sender.profileImage} />
+                    <AvatarFallback>{sender.fullName.substring(0, 2)}</AvatarFallback>
                   </Avatar>
                 )}
                 <div
@@ -89,7 +95,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       {format(new Date(message.timestamp), 'h:mm a, MMM d')}
                     </p>
                     <p className="text-xs opacity-70 ml-2">
-                      {isCurrentUser ? 'You' : sender.fullName}
+                      {sender.fullName}
                     </p>
                   </div>
                 </div>

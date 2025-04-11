@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -137,14 +138,18 @@ const ChatPage = () => {
     );
   }
 
+  // Extract professional and user info correctly
   const professional = 
-  typeof consultation.professionalId === 'string'
-    ? JSON.parse(consultation.professionalId) 
-    : consultation.professionalId;
+    typeof consultation.professionalId === 'string'
+      ? PROFESSIONALS[consultation.professionalId]
+      : consultation.professionalId;
 
-  const professionalImage = professional ? professional.profileImage : '';
-  const professionalName = professional ? professional.fullName : 'Unknown Professional';
-
+  // Extract client/user info
+  const client = 
+    typeof consultation.userId === 'string'
+      ? { _id: consultation.userId, fullName: 'Client', role: 'user' as const }
+      : consultation.userId;
+  
   const returnPath = user.role === 'user' ? '/my-requests' : `/${user.role}-dashboard`;
 
   const sortedMessages = Array.isArray(consultation.messages)
@@ -152,6 +157,10 @@ const ChatPage = () => {
         (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       )
     : [];
+
+  // Determine which details to show based on current user role
+  const showProfessionalDetails = user.role === 'user';
+  const otherParty = user.role === 'user' ? professional : client;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -166,7 +175,7 @@ const ChatPage = () => {
             </Link>
           </div>
 
-          {user.role === 'user' && (
+          {showProfessionalDetails && professional && (
             <Card className="mt-8 shadow-sm">
               <CardHeader>
                 <CardTitle>Professional Details</CardTitle>
@@ -177,13 +186,13 @@ const ChatPage = () => {
               <CardContent>
                 <div className="flex flex-col md:flex-row items-start gap-6">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={professionalImage} />
-                    <AvatarFallback className="text-lg">{professionalName.substring(0, 2)}</AvatarFallback>
+                    <AvatarImage src={professional.profileImage} />
+                    <AvatarFallback className="text-lg">{professional.fullName?.substring(0, 2) || 'PR'}</AvatarFallback>
                   </Avatar>
                   
                   <div className="space-y-3">
                     <div>
-                      <h3 className="text-lg font-medium">{professionalName}</h3>
+                      <h3 className="text-lg font-medium">{professional.fullName}</h3>
                       <p className="text-muted-foreground capitalize">{professional?.role || 'Professional'}</p>
                     </div>
                     
@@ -213,17 +222,53 @@ const ChatPage = () => {
             </Card>
           )}
 
+          {!showProfessionalDetails && client && (
+            <Card className="mt-8 shadow-sm">
+              <CardHeader>
+                <CardTitle>Client Details</CardTitle>
+                <CardDescription>
+                  Information about the client
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col md:flex-row items-start gap-6">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={client.profileImage} />
+                    <AvatarFallback className="text-lg">{client.fullName?.substring(0, 2) || 'CL'}</AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-lg font-medium">{client.fullName}</h3>
+                      <p className="text-muted-foreground">Client</p>
+                    </div>
+                    
+                    {client?.email && (
+                      <div>
+                        <p className="text-sm font-medium">Email</p>
+                        <p className="text-muted-foreground">{client.email}</p>
+                      </div>
+                    )}
+                    
+                    {client?.phoneNumber && (
+                      <div>
+                        <p className="text-sm font-medium">Contact</p>
+                        <p className="text-muted-foreground">{client.phoneNumber}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <ChatInterface
             messages={sortedMessages}
             currentUser={user}
-            professional={{
-              fullName: professionalName,
-              profileImage: professionalImage,
-              ...professional,
-            }}
+            professional={professional}
+            otherUser={client}
             onSendMessage={handleSendMessage}
           />
-          
           
         </div>
       </main>
