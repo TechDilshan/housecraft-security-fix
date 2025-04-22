@@ -161,7 +161,7 @@ export const updateConsultation = async (req, res) => {
 };
 
 // Export the token verifier for socket.io
-export const verifyToken = (token) => {
+export const verifyToken = async (token) => {
   try {
     // We need to reuse the jwt verification logic from authMiddleware
     // Since this will be used by socket.io, we can't use the middleware directly
