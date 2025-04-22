@@ -5,11 +5,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
 import authRoutes from './routes/authRoutes.js';
 import houseRoutes from './routes/houseRoutes.js';
 import consultationRoutes from './routes/consultationRoutes.js';
 import userRoutes from './routes/userRoutes.js';
-import { verifyToken } from './middleware/authMiddleware.js';
+import { User } from './models/User.js';
 
 // Load environment variables
 dotenv.config();
@@ -64,17 +65,37 @@ io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth.token;
     if (!token) {
+      console.log('Socket auth error: No token provided');
       return next(new Error('Authentication error: Token not provided'));
     }
     
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return next(new Error('Authentication error: Invalid token'));
+    try {
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      if (!decoded.userId) {
+        console.log('Socket auth error: Invalid token structure');
+        return next(new Error('Authentication error: Invalid token structure'));
+      }
+      
+      // Find user by ID
+      const user = await User.findById(decoded.userId).select('-password');
+      
+      if (!user) {
+        console.log('Socket auth error: User not found');
+        return next(new Error('Authentication error: User not found'));
+      }
+      
+      // Attach user to socket
+      socket.user = user;
+      console.log(`Socket authenticated for user: ${user._id}`);
+      next();
+    } catch (error) {
+      console.log('Socket auth error:', error.message);
+      return next(new Error('Authentication error: ' + error.message));
     }
-    
-    socket.user = decoded;
-    next();
   } catch (error) {
+    console.error('Unexpected error in socket auth:', error);
     next(new Error('Authentication error: ' + error.message));
   }
 });
@@ -106,6 +127,7 @@ io.on('connection', (socket) => {
       
       const consultation = await ConsultationRequest.findById(consultationId);
       if (!consultation) {
+        console.log(`Consultation not found: ${consultationId}`);
         socket.emit('error', { message: 'Consultation not found' });
         return;
       }
@@ -115,6 +137,7 @@ io.on('connection', (socket) => {
         consultation.userId.toString() !== senderId.toString() && 
         consultation.professionalId.toString() !== senderId.toString()
       ) {
+        console.log(`User ${senderId} not authorized for consultation ${consultationId}`);
         socket.emit('error', { message: 'Not authorized to add messages to this consultation' });
         return;
       }
@@ -131,8 +154,13 @@ io.on('connection', (socket) => {
       consultation.updatedAt = Date.now();
       await consultation.save();
       
+      console.log(`Message sent in room ${consultationId}`);
+      
       // Broadcast the message to the room
-      io.to(consultationId).emit('new-message', newMessage);
+      io.to(consultationId).emit('new-message', {
+        ...newMessage,
+        consultationId // Include the consultationId in the emitted message
+      });
     } catch (error) {
       console.error('Error sending message:', error);
       socket.emit('error', { message: 'Error sending message: ' + error.message });

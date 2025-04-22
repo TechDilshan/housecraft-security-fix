@@ -1,3 +1,4 @@
+
 import express from 'express';
 import { 
   createConsultation,
@@ -14,20 +15,22 @@ const router = express.Router();
 // All routes are protected
 router.use(protect);
 
-// User routes
+// Create new consultation
 router.route('/')
-  .post(createConsultation)
+  .post(createConsultation);
 
+// Get, update consultation by ID
 router.route('/:id')
   .get(getConsultationById)
   .put(updateConsultation);
 
+// Add message to consultation
 router.post('/:id/messages', addMessage);
 
-// User routes
+// Get user's consultations - modified to use the authenticated user
 router.get('/user/:userId', getConsultationsByUser);
 
-// Professional routes
-router.get('/professional/:userId', professional, getConsultationsByProfessional);
+// Get professional's consultations - protect with professional middleware
+router.get('/professional/me', professional, getConsultationsByProfessional);
 
 export default router;

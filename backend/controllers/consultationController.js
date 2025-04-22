@@ -11,6 +11,14 @@ export const createConsultation = async (req, res) => {
     // Use req.user._id directly since it's already an ObjectId
     const userId = req.user._id;
     
+    console.log('Creating consultation with:', { 
+      userId, 
+      professionalId, 
+      consultationType, 
+      houseId,
+      firstMessage: message 
+    });
+    
     // Create consultation request with initial message
     const consultationRequest = await ConsultationRequest.create({
       userId,
@@ -20,7 +28,8 @@ export const createConsultation = async (req, res) => {
       messages: [{
         senderId: userId,
         recipientId: professionalId,
-        content: message
+        content: message,
+        timestamp: new Date()
       }]
     });
 
@@ -95,6 +104,8 @@ export const addMessage = async (req, res) => {
   try {
     const { content, recipientId } = req.body;
     const senderId = req.user._id;
+    
+    console.log(`Adding message from ${senderId} to consultation ${req.params.id}`);
     
     const consultation = await ConsultationRequest.findById(req.params.id);
     if (!consultation) {

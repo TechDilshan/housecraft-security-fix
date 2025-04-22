@@ -30,24 +30,48 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     if (loading) return;
     
+    // Cleanup function to disconnect socket
+    const disconnectSocket = () => {
+      if (socket) {
+        console.log('Manually disconnecting socket');
+        socket.disconnect();
+        setSocket(null);
+        setIsConnected(false);
+      }
+    };
+
     if (user && !socket) {
       const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found for socket connection');
+        return disconnectSocket;
+      }
       
       // Connect to socket server with authentication
-      const socketInstance = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001', {
+      const socketUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001';
+      console.log(`Connecting to socket server at: ${socketUrl}`);
+      
+      const socketInstance = io(socketUrl, {
         auth: { token },
         autoConnect: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
       });
       
       // Set up event listeners
       socketInstance.on('connect', () => {
-        console.log('Socket connected');
+        console.log('Socket connected with ID:', socketInstance.id);
         setIsConnected(true);
       });
       
-      socketInstance.on('disconnect', () => {
-        console.log('Socket disconnected');
+      socketInstance.on('disconnect', (reason) => {
+        console.log('Socket disconnected. Reason:', reason);
         setIsConnected(false);
+      });
+      
+      socketInstance.on('connect_error', (error) => {
+        console.error('Socket connection error:', error.message);
       });
       
       socketInstance.on('error', (error) => {
@@ -57,29 +81,29 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setSocket(socketInstance);
       
       // Clean up on unmount
-      return () => {
-        socketInstance.disconnect();
-        setSocket(null);
-        setIsConnected(false);
-      };
+      return disconnectSocket;
     } else if (!user && socket) {
       // Disconnect if user logs out
-      socket.disconnect();
-      setSocket(null);
-      setIsConnected(false);
+      return disconnectSocket;
     }
+    
+    return disconnectSocket;
   }, [user, loading]);
   
   // Join a chat room
   const joinChat = (consultationId: string) => {
     if (socket && isConnected) {
+      console.log(`Joining chat room: ${consultationId}`);
       socket.emit('join-chat', consultationId);
+    } else {
+      console.warn('Cannot join chat - socket not connected');
     }
   };
   
   // Leave a chat room
   const leaveChat = (consultationId: string) => {
     if (socket && isConnected) {
+      console.log(`Leaving chat room: ${consultationId}`);
       socket.emit('leave-chat', consultationId);
     }
   };
@@ -87,7 +111,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Send a message
   const sendMessage = (consultationId: string, recipientId: string, content: string) => {
     if (socket && isConnected) {
+      console.log(`Sending message to ${recipientId} in consultation ${consultationId}`);
       socket.emit('send-message', { consultationId, recipientId, content });
+    } else {
+      console.warn('Cannot send message - socket not connected');
     }
   };
   
