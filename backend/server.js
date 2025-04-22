@@ -1,4 +1,3 @@
-
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -104,70 +103,59 @@ io.use(async (socket, next) => {
 io.on('connection', (socket) => {
   console.log('User connected:', socket.user._id);
   
-  // Join consultation chat rooms
   socket.on('join-chat', (consultationId) => {
     socket.join(consultationId);
     console.log(`User ${socket.user._id} joined chat ${consultationId}`);
   });
   
-  // Leave consultation chat rooms
   socket.on('leave-chat', (consultationId) => {
     socket.leave(consultationId);
     console.log(`User ${socket.user._id} left chat ${consultationId}`);
   });
   
-  // Handle new messages
   socket.on('send-message', async (data) => {
     try {
       const { consultationId, content, recipientId } = data;
       const senderId = socket.user._id;
       
-      // Import here to avoid circular dependency
       const { ConsultationRequest } = await import('./models/ConsultationRequest.js');
       
       const consultation = await ConsultationRequest.findById(consultationId);
       if (!consultation) {
-        console.log(`Consultation not found: ${consultationId}`);
         socket.emit('error', { message: 'Consultation not found' });
         return;
       }
 
-      // Check if user is authorized to add messages
       if (
         consultation.userId.toString() !== senderId.toString() && 
         consultation.professionalId.toString() !== senderId.toString()
       ) {
-        console.log(`User ${senderId} not authorized for consultation ${consultationId}`);
-        socket.emit('error', { message: 'Not authorized to add messages to this consultation' });
+        socket.emit('error', { message: 'Not authorized for this consultation' });
         return;
       }
       
-      // Create and add message
       const newMessage = {
         senderId,
         recipientId,
         content,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        consultationId
       };
       
       consultation.messages.push(newMessage);
       consultation.updatedAt = Date.now();
       await consultation.save();
       
-      console.log(`Message sent in room ${consultationId}`);
+      // Emit to all users in the room
+      io.to(consultationId).emit('new-message', newMessage);
       
-      // Broadcast the message to the room
-      io.to(consultationId).emit('new-message', {
-        ...newMessage,
-        consultationId // Include the consultationId in the emitted message
-      });
+      console.log(`Message sent in consultation ${consultationId}`);
     } catch (error) {
       console.error('Error sending message:', error);
       socket.emit('error', { message: 'Error sending message: ' + error.message });
     }
   });
   
-  // Disconnect handling
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.user._id);
   });

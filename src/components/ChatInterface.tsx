@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { User, ChatMessage } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSocket } from '@/context/SocketContext';
+import { toast } from 'sonner';
 
 interface ChatInterfaceProps {
   consultationId: string;
@@ -15,7 +15,7 @@ interface ChatInterfaceProps {
   currentUser: User;
   professional: User;
   onNewMessage: (message: ChatMessage) => void;
-  otherUser?: User; // Add otherUser prop to handle both professional and user view
+  otherUser?: User;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -27,27 +27,49 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   otherUser,
 }) => {
   const [newMessage, setNewMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { sendMessage } = useSocket();
+  const { socket, sendMessage, isConnected } = useSocket();
   
-  // Determine the chat partner based on current user role
   const chatPartner = currentUser.role === 'user' ? professional : otherUser || professional;
   
-  const handleSendMessage = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (socket) {
+      socket.on('new-message', (message: ChatMessage) => {
+        if (message.consultationId === consultationId) {
+          console.log('Received new message:', message);
+          onNewMessage(message);
+        }
+      });
+
+      return () => {
+        socket.off('new-message');
+      };
+    }
+  }, [socket, consultationId, onNewMessage]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim()) {
-      // Get recipient ID (the person we're sending to)
+    if (!newMessage.trim() || !isConnected) return;
+
+    try {
+      setIsSending(true);
       const recipientId = chatPartner._id;
       
-      // Use the WebSocket to send the message
-      sendMessage(consultationId, recipientId, newMessage);
+      // Send message through WebSocket
+      sendMessage(consultationId, recipientId, newMessage.trim());
       
-      // Clear the input
+      // Clear input field
       setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
+    } finally {
+      setIsSending(false);
     }
   };
 
-  // Auto-scroll to the latest message
+  // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);

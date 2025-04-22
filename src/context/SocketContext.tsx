@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { toast } from 'sonner';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -25,15 +26,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const { user, loading } = useAuth();
-  
-  // Initialize socket connection when user is authenticated
+
   useEffect(() => {
     if (loading) return;
-    
-    // Cleanup function to disconnect socket
+
     const disconnectSocket = () => {
       if (socket) {
-        console.log('Manually disconnecting socket');
+        console.log('Disconnecting socket');
         socket.disconnect();
         setSocket(null);
         setIsConnected(false);
@@ -46,11 +45,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         console.error('No token found for socket connection');
         return disconnectSocket;
       }
-      
-      // Connect to socket server with authentication
+
       const socketUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001';
-      console.log(`Connecting to socket server at: ${socketUrl}`);
-      
+      console.log('Connecting to socket server:', socketUrl);
+
       const socketInstance = io(socketUrl, {
         auth: { token },
         autoConnect: true,
@@ -58,66 +56,72 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         reconnectionAttempts: 5,
         reconnectionDelay: 2000,
       });
-      
-      // Set up event listeners
+
       socketInstance.on('connect', () => {
-        console.log('Socket connected with ID:', socketInstance.id);
+        console.log('Socket connected successfully', socketInstance.id);
         setIsConnected(true);
+        toast.success('Connected to chat server');
       });
-      
+
       socketInstance.on('disconnect', (reason) => {
-        console.log('Socket disconnected. Reason:', reason);
+        console.log('Socket disconnected:', reason);
         setIsConnected(false);
+        toast.error('Disconnected from chat server');
       });
-      
+
       socketInstance.on('connect_error', (error) => {
         console.error('Socket connection error:', error.message);
+        toast.error('Chat connection error: ' + error.message);
       });
-      
+
       socketInstance.on('error', (error) => {
         console.error('Socket error:', error);
+        toast.error('Chat error: ' + error.message);
       });
-      
+
+      socketInstance.on('new-message', (message) => {
+        console.log('New message received:', message);
+        // The actual message handling is done in the ChatInterface component
+      });
+
       setSocket(socketInstance);
-      
-      // Clean up on unmount
+
       return disconnectSocket;
     } else if (!user && socket) {
-      // Disconnect if user logs out
       return disconnectSocket;
     }
-    
+
     return disconnectSocket;
   }, [user, loading]);
-  
-  // Join a chat room
+
   const joinChat = (consultationId: string) => {
     if (socket && isConnected) {
-      console.log(`Joining chat room: ${consultationId}`);
+      console.log('Joining chat room:', consultationId);
       socket.emit('join-chat', consultationId);
+      toast.success('Joined chat room');
     } else {
       console.warn('Cannot join chat - socket not connected');
+      toast.error('Cannot join chat - not connected');
     }
   };
-  
-  // Leave a chat room
+
   const leaveChat = (consultationId: string) => {
     if (socket && isConnected) {
-      console.log(`Leaving chat room: ${consultationId}`);
+      console.log('Leaving chat room:', consultationId);
       socket.emit('leave-chat', consultationId);
     }
   };
-  
-  // Send a message
+
   const sendMessage = (consultationId: string, recipientId: string, content: string) => {
     if (socket && isConnected) {
-      console.log(`Sending message to ${recipientId} in consultation ${consultationId}`);
+      console.log('Sending message:', { consultationId, recipientId, content });
       socket.emit('send-message', { consultationId, recipientId, content });
     } else {
       console.warn('Cannot send message - socket not connected');
+      toast.error('Cannot send message - not connected');
     }
   };
-  
+
   return (
     <SocketContext.Provider value={{ socket, isConnected, joinChat, leaveChat, sendMessage }}>
       {children}
