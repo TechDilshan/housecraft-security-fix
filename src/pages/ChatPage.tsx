@@ -4,8 +4,9 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import ChatInterface from '@/components/ChatInterface';
 import { useAuth } from '@/context/AuthContext';
-import { ConsultationRequest, User } from '@/types';
-import { getConsultationById, addMessageToConsultation } from '@/services/consultationService';
+import { useSocket } from '@/context/SocketContext';
+import { ConsultationRequest, User, ChatMessage } from '@/types';
+import { getConsultationById } from '@/services/consultationService';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -54,10 +55,12 @@ const ChatPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { joinChat, leaveChat } = useSocket();
 
   const [consultation, setConsultation] = useState<ConsultationRequest | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch the consultation data initially
   const fetchConsultation = async () => {
     try {
       const consultationData = await getConsultationById(_id);
@@ -81,36 +84,33 @@ const ChatPage = () => {
     }
 
     fetchConsultation();
-    const interval = setInterval(fetchConsultation, 5000);
-
-    return () => clearInterval(interval);
+    
+    // No need for interval polling with WebSockets
   }, [_id, user, navigate]);
-
-  const handleSendMessage = async (content: string) => {
-    if (!user || !consultation) return;
-
-    try {
-      const recipientId =
-        user._id === consultation.userId ? consultation.professionalId : consultation.userId;
-
-      const newMessage = await addMessageToConsultation(
-        consultation._id,
-        user._id,
-        recipientId,
-        content
-      );
-
-      setConsultation((prev) => prev && { ...prev, messages: [...(prev.messages || []), newMessage] });
-
-      setTimeout(fetchConsultation, 1000);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: 'Error',
-        description: 'Could not send message',
-        variant: 'destructive',
-      });
+  
+  // Join the chat room when consultation data is loaded
+  useEffect(() => {
+    if (consultation && _id) {
+      joinChat(_id);
+      
+      // Leave the room when component unmounts
+      return () => {
+        leaveChat(_id);
+      };
     }
+  }, [consultation, _id, joinChat, leaveChat]);
+  
+  // Handle receiving a new message via WebSocket
+  const handleNewMessage = (message: ChatMessage) => {
+    setConsultation((prev) => {
+      if (!prev) return null;
+      
+      // Add the new message to the messages array
+      return {
+        ...prev,
+        messages: [...prev.messages, message],
+      };
+    });
   };
 
   if (loading) {
@@ -276,11 +276,12 @@ const ChatPage = () => {
           )}
 
           <ChatInterface
+            consultationId={_id}
             messages={sortedMessages}
             currentUser={user}
             professional={professional}
+            onNewMessage={handleNewMessage}
             otherUser={client}
-            onSendMessage={handleSendMessage}
           />
           
         </div>

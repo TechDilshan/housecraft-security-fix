@@ -7,24 +7,28 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Send } from 'lucide-react';
 import { format } from 'date-fns';
+import { useSocket } from '@/context/SocketContext';
 
 interface ChatInterfaceProps {
+  consultationId: string;
   messages: ChatMessage[];
   currentUser: User;
   professional: User;
-  onSendMessage: (content: string) => void;
+  onNewMessage: (message: ChatMessage) => void;
   otherUser?: User; // Add otherUser prop to handle both professional and user view
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
+  consultationId,
   messages,
   currentUser,
   professional,
-  onSendMessage,
+  onNewMessage,
   otherUser,
 }) => {
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { sendMessage } = useSocket();
   
   // Determine the chat partner based on current user role
   const chatPartner = currentUser.role === 'user' ? professional : otherUser || professional;
@@ -32,7 +36,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (newMessage.trim()) {
-      onSendMessage(newMessage);
+      // Get recipient ID (the person we're sending to)
+      const recipientId = chatPartner._id;
+      
+      // Use the WebSocket to send the message
+      sendMessage(consultationId, recipientId, newMessage);
+      
+      // Clear the input
       setNewMessage('');
     }
   };

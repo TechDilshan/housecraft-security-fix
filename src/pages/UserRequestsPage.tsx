@@ -1,7 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
+import { useSocket } from '@/context/SocketContext';
 import { ConsultationRequest, User } from '@/types';
 import { getConsultationsByUser } from '@/services/consultationService';
 import {
@@ -54,6 +56,7 @@ const PROFESSIONALS: Record<string, User> = {
 
 const UserRequestsPage = () => {
   const { user } = useAuth();
+  const { socket, isConnected } = useSocket();
   const [requests, setRequests] = useState<ConsultationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -73,10 +76,37 @@ const UserRequestsPage = () => {
     
     fetchRequests();
     
-    const interval = setInterval(fetchRequests, 10000);
+    // No need for interval polling with WebSockets
+    // However, we'll still need to refresh data occasionally in case of missed messages
+    const refreshInterval = setInterval(fetchRequests, 60000); // 1 minute
     
-    return () => clearInterval(interval);
-  }, [user]);
+    // Set up WebSocket event listener for new messages
+    if (socket) {
+      socket.on('new-message', (newMessage) => {
+        // Check if this message belongs to one of our consultations
+        setRequests((prevRequests) => {
+          return prevRequests.map(request => {
+            // If this message belongs to this consultation, add it
+            if (request._id === newMessage.consultationId) {
+              return {
+                ...request,
+                messages: [...request.messages, newMessage],
+                updatedAt: new Date().toISOString()
+              };
+            }
+            return request;
+          });
+        });
+      });
+    }
+    
+    return () => {
+      clearInterval(refreshInterval);
+      if (socket) {
+        socket.off('new-message');
+      }
+    };
+  }, [user, socket, isConnected]);
   
   if (!user) {
     return <Navigate to="/login" />;

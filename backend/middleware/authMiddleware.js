@@ -1,50 +1,73 @@
+
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 
-export const protect = async (req, res, next) => {
-  let token;
-  
-  // Check if token exists in header
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
-      // Get token from header
-      token = req.headers.authorization.split(' ')[1];
-      
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
-      // Get user from token
-      req.user = await User.findById(decoded.userId).select('-password');
-      
-      next();
-    } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+// Verify JWT token
+export const verifyToken = (token) => {
+  try {
+    if (!token) {
+      return null;
     }
-  }
-  
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded;
+  } catch (error) {
+    console.error('Token verification error:', error);
+    return null;
   }
 };
 
-// Middleware to check if user is admin
-export const admin = (req, res, next) => {
+// Protect routes
+export const protect = async (req, res, next) => {
+  try {
+    let token;
+
+    // Check for token in Authorization header
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    // If no token, return unauthorized
+    if (!token) {
+      return res.status(401).json({ message: 'Not authorized, no token' });
+    }
+
+    // Verify token
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Not authorized, invalid token' });
+    }
+
+    // Find user by id
+    const user = await User.findById(decoded.id).select('-password');
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Not authorized, user not found' });
+    }
+
+    // Add user to request object
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error(error);
+    res.status(401).json({ message: 'Not authorized, token failed' });
+  }
+};
+
+// Check if user is admin
+export const admin = async (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized as admin' });
+    res.status(403).json({ message: 'Not authorized as an admin' });
   }
 };
 
-// Middleware to check if user is professional (engineer, architect, or vastu)
-export const professional = (req, res, next) => {
-  if (req.user && ['engineer', 'architect', 'vastu'].includes(req.user.role)) {
+// Check if user is a professional (architect, engineer, vastu)
+export const professional = async (req, res, next) => {
+  if (req.user && ['architect', 'engineer', 'vastu'].includes(req.user.role)) {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized as professional' });
+    res.status(403).json({ message: 'Not authorized as a professional' });
   }
 };

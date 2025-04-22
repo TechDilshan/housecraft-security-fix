@@ -1,3 +1,4 @@
+
 import { ConsultationRequest } from '../models/ConsultationRequest.js';
 import { User } from '../models/User.js';
 import mongoose from 'mongoose';
@@ -38,7 +39,6 @@ export const createConsultation = async (req, res) => {
 // Get consultation by ID
 export const getConsultationById = async (req, res) => {
   try {
-
     const consultation = await ConsultationRequest.findOne({ _id: req.params.id })
       .populate('userId', 'fullName email profileImage')
       .populate('professionalId', 'fullName email profileImage degree role');
@@ -46,8 +46,6 @@ export const getConsultationById = async (req, res) => {
     if (!consultation) {
       return res.status(404).json({ message: 'Consultation not found' });
     }
-
-    
 
     // Check if user is authorized to view this consultation
     // if (
@@ -92,7 +90,7 @@ export const getConsultationsByProfessional = async (req, res) => {
   }
 };
 
-// Add message to consultation
+// Add message to consultation (REST API fallback for WebSocket)
 export const addMessage = async (req, res) => {
   try {
     const { content, recipientId } = req.body;
@@ -123,6 +121,7 @@ export const addMessage = async (req, res) => {
     consultation.updatedAt = Date.now();
     await consultation.save();
 
+    // Note: With WebSockets, the message will be broadcast by the socket server
     res.status(201).json(newMessage);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -158,5 +157,23 @@ export const updateConsultation = async (req, res) => {
     res.json(updatedConsultation);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Export the token verifier for socket.io
+export const verifyToken = (token) => {
+  try {
+    // We need to reuse the jwt verification logic from authMiddleware
+    // Since this will be used by socket.io, we can't use the middleware directly
+    if (!token) {
+      return null;
+    }
+    
+    const jwt = await import('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded;
+  } catch (error) {
+    console.error('Token verification error:', error);
+    return null;
   }
 };

@@ -31,7 +31,6 @@ export const getConsultationById = async (_id: string) => {
   }
 };
 
-
 // Get consultations by current user
 export const getConsultationsByUser = async (userId) => {
   const response = await api.get(`/consultations/user/${userId}`);
@@ -44,7 +43,7 @@ export const getConsultationsByProfessional = async () => {
   return response.data;
 };
 
-// Add message to consultation
+// Add message to consultation (used as a fallback if WebSocket fails)
 export const addMessageToConsultation = async (
   consultationId: string,
   senderId: string,
