@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,10 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/types';
+import { googleLogin } from '@/services/authService';
 
 const LoginForm = () => {
-  const { login } = useAuth();
+  const { login, updateUserData } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -23,6 +24,7 @@ const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleReady, setIsGoogleReady] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +78,45 @@ const LoginForm = () => {
       setIsLoading(false);
     }
   };
+
+  // Google Identity Services init and button render
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const gis = (window as any).google?.accounts?.id;
+    if (!clientId || !gis) return;
+
+      gis.initialize({
+      client_id: clientId,
+      callback: async (resp: any) => {
+        try {
+          setIsLoading(true);
+            const data = await googleLogin(resp.credential);
+            // Immediately reflect authenticated user in context
+            updateUserData(data);
+            // Navigate to home after successful Google login
+            navigate('/', { replace: true });
+            window.location.reload();
+        } catch (err) {
+          console.error('Google login failed', err);
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      ux_mode: 'popup',
+      auto_select: false,
+    });
+
+    gis.renderButton(document.getElementById('googleBtn'), {
+      theme: 'outline',
+      size: 'large',
+      width: 320,
+      type: 'standard',
+      text: 'continue_with',
+      shape: 'rectangular',
+    });
+
+    setIsGoogleReady(true);
+  }, []);
   
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -113,6 +154,9 @@ const LoginForm = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+          </div>
+          <div className="mt-2 flex flex-col items-center">
+            <div id="googleBtn" className="w-full flex justify-center" />
           </div>
         </CardContent>
         

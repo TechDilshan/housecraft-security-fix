@@ -2,16 +2,22 @@ import Joi from 'joi';
 
 // Validation schemas
 const userRegistrationSchema = Joi.object({
-  fullName: Joi.string().min(2).max(50).trim().required(),
+  fullName: Joi.string().min(2).max(100).trim().required(),
   email: Joi.string().email().lowercase().trim().required(),
-  phoneNumber: Joi.string().pattern(/^[0-9]{10}$/).required(),
-  password: Joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/).required(),
+  // Allow 7-15 digits after normalization to support more formats/locales
+  phoneNumber: Joi.string().pattern(/^[0-9]{7,15}$/).required(),
+  // Relaxed password rule to reduce signup friction
+  password: Joi.string().min(6).required(),
   role: Joi.string().valid('user', 'admin', 'engineer', 'architect', 'vastu').default('user')
 });
 
 const userLoginSchema = Joi.object({
   email: Joi.string().email().lowercase().trim().required(),
   password: Joi.string().required()
+});
+
+const googleAuthSchema = Joi.object({
+  idToken: Joi.string().min(10).required()
 });
 
 const houseSchema = Joi.object({
@@ -37,8 +43,8 @@ const updatePasswordSchema = Joi.object({
 });
 
 const updateProfileSchema = Joi.object({
-  fullName: Joi.string().min(2).max(50).trim().optional(),
-  phoneNumber: Joi.string().pattern(/^[0-9]{10}$/).optional(),
+  fullName: Joi.string().min(2).max(100).trim().optional(),
+  phoneNumber: Joi.string().pattern(/^[0-9]{7,15}$/).optional(),
   profileImage: Joi.string().uri().optional(),
   degree: Joi.string().max(100).trim().optional()
 });
@@ -46,16 +52,30 @@ const updateProfileSchema = Joi.object({
 // Validation middleware factory
 const validate = (schema) => {
   return (req, res, next) => {
-    const { error } = schema.validate(req.body, { abortEarly: false });
+    // Normalize common fields before validation
+    const normalized = { ...req.body };
+    if (typeof normalized.phoneNumber === 'string') {
+      // Strip all non-digits
+      normalized.phoneNumber = normalized.phoneNumber.replace(/\D+/g, '');
+    }
+    const { error, value } = schema.validate(normalized, {
+      abortEarly: false,
+      allowUnknown: true,
+      stripUnknown: true
+    });
     
     if (error) {
       const errorMessages = error.details.map(detail => detail.message);
+      // Log detailed validation error for debugging signup issues
+      console.error('Validation error:', errorMessages);
       return res.status(400).json({
         message: 'Validation error',
         errors: errorMessages
       });
     }
     
+    // Overwrite with sanitized and stripped values so downstream receives cleaned data
+    req.body = value;
     next();
   };
 };
@@ -63,6 +83,7 @@ const validate = (schema) => {
 // Export validation middleware functions
 export const validateUserRegistration = validate(userRegistrationSchema);
 export const validateUserLogin = validate(userLoginSchema);
+export const validateGoogleAuth = validate(googleAuthSchema);
 export const validateHouse = validate(houseSchema);
 export const validateConsultation = validate(consultationSchema);
 export const validateUpdatePassword = validate(updatePasswordSchema);

@@ -34,7 +34,7 @@ const PORT = process.env.PORT || 5001;
           defaultSrc: ["'self'"],
 
           // Script and styles
-          scriptSrc: ["'self'"],
+          scriptSrc: ["'self'", "https://accounts.google.com", "https://apis.google.com"],
           // Allow inline styles only in development; avoid in production
           styleSrc: process.env.NODE_ENV === 'production'
             ? ["'self'", "https://fonts.googleapis.com"]
@@ -43,12 +43,12 @@ const PORT = process.env.PORT || 5001;
 
           // Media and connections
           imgSrc: ["'self'", "data:", "https:", "blob:"],
-          connectSrc: ["'self'", "ws:", "wss:"],
+          connectSrc: ["'self'", "ws:", "wss:", "https://accounts.google.com"],
           mediaSrc: ["'self'"],
 
           // Frame/embedding controls
           frameAncestors: ["'none'"],
-          frameSrc: ["'none'"],
+          frameSrc: ["'self'", "https://accounts.google.com"],
           objectSrc: ["'none'"],
           baseUri: ["'self'"],
           formAction: ["'self'"],
@@ -189,7 +189,8 @@ const csrfExcludePaths = [
   '/api/auth/csrf-token',
   '/api/auth/login',
   '/api/auth/register',
-  '/api/auth/logout'
+  '/api/auth/logout',
+  '/api/auth/google'
 ];
 
 app.use((req, res, next) => {

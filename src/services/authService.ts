@@ -49,3 +49,9 @@ export const deleteUserAccount = async () => {
   const response = await api.delete('/auth/account');
   return response.data;
 };
+
+// Google OAuth login/signup
+export const googleLogin = async (idToken: string) => {
+  const response = await api.post('/auth/google', { idToken });
+  return response.data;
+};
