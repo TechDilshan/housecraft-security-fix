@@ -40,17 +40,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     if (user && !socket) {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No token found for socket connection');
-        return disconnectSocket;
-      }
-
       const socketUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001';
       console.log('Connecting to socket server:', socketUrl);
 
       const socketInstance = io(socketUrl, {
-        auth: { token },
+        // Token is now handled automatically via httpOnly cookies
+        withCredentials: true,
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 5,

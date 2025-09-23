@@ -9,6 +9,7 @@ import {
   updateConsultation
 } from '../controllers/consultationController.js';
 import { protect, professional } from '../middleware/authMiddleware.js';
+import { consultationLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ router.use(protect);
 
 // Create new consultation
 router.route('/')
-  .post(createConsultation);
+  .post(consultationLimiter, createConsultation);
 
 // Get, update consultation by ID
 router.route('/:id')

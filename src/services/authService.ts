@@ -9,9 +9,7 @@ export const register = async (userData: Omit<User, 'id'>, password: string) => 
     password
   });
   
-  // Save token to localStorage
-  localStorage.setItem('token', response.data.token);
-  
+  // Token is now automatically set as httpOnly cookie
   return response.data;
 };
 
@@ -22,9 +20,7 @@ export const login = async (email: string, password: string) => {
     password
   });
   
-  // Save token to localStorage
-  localStorage.setItem('token', response.data.token);
-  
+  // Token is now automatically set as httpOnly cookie
   return response.data;
 };
 
@@ -34,9 +30,9 @@ export const getProfile = async () => {
   return response.data;
 };
 
-// Logout user (clear token)
-export const logout = () => {
-  localStorage.removeItem('token');
+// Logout user (clear cookie)
+export const logout = async () => {
+  await api.post('/auth/logout');
 };
 
 // Update password
