@@ -2,6 +2,7 @@
 import { ConsultationRequest } from '../models/ConsultationRequest.js';
 import { User } from '../models/User.js';
 import mongoose from 'mongoose';
+import { sanitizeText } from '../middleware/xssProtectionMiddleware.js';
 
 // Create consultation request
 export const createConsultation = async (req, res) => {
@@ -57,13 +58,13 @@ export const getConsultationById = async (req, res) => {
     }
 
     // Check if user is authorized to view this consultation
-    // if (
-    //   consultation.userId.toString() !== req.user._id.toString() && 
-    //   consultation.professionalId.toString() !== req.user._id.toString() &&
-    //   req.user.role !== 'admin'
-    // ) {
-    //   return res.status(403).json({ message: 'Not authorized to view this consultation' });
-    // }
+    if (
+      consultation.userId.toString() !== req.user._id.toString() && 
+      consultation.professionalId.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      return res.status(403).json({ message: 'Not authorized to view this consultation' });
+    }
 
     res.json(consultation);
   } catch (error) {
