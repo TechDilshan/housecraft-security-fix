@@ -21,16 +21,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check for saved token on component mount
   useEffect(() => {
     const checkLoggedIn = async () => {
-      const token = localStorage.getItem('token');
-      
-      if (token) {
+      try {
+        // Ensure CSRF token cookie exists for subsequent state-changing requests
         try {
-          const userData = await authService.getProfile();
-          setUser(userData);
-        } catch (error) {
-          console.error('Error getting user profile:', error);
-          // Don't remove token on error - this prevents logout on page refresh if API is temporarily unavailable
-        }
+          await fetch((import.meta as any).env.VITE_API_URL?.replace(/\/$/, '') + '/auth/csrf-token', {
+            credentials: 'include'
+          });
+        } catch {}
+        // Try to get user profile - if successful, user is logged in
+        const userData = await authService.getProfile();
+        setUser(userData);
+      } catch (error) {
+        console.error('Error getting user profile:', error);
+        // User is not logged in or token expired
+        setUser(null);
       }
       
       setLoading(false);
@@ -68,9 +72,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Logout function
-  const logout = () => {
-    authService.logout();
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+    }
   };
 
   // Update user data function

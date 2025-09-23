@@ -14,16 +14,16 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Configure Axios to use XSRF cookie/header names
+// Axios will read the XSRF-TOKEN cookie and send it as X-XSRF-TOKEN header automatically
+(api.defaults as any).xsrfCookieName = 'XSRF-TOKEN';
+(api.defaults as any).xsrfHeaderName = 'X-XSRF-TOKEN';
+
 // Add token to requests
 api.interceptors.request.use(
   (config) => {
-    // Get the token from localStorage
-    const token = localStorage.getItem('token');
-    
-    // If token exists, add it to the authorization header
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    // Note: Token is now handled automatically by cookies (httpOnly)
+    // No need to manually add token to headers
     return config;
   },
   (error) => Promise.reject(error)
