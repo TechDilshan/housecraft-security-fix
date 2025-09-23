@@ -37,8 +37,29 @@ const suspiciousPatterns = [
   /%3e/i,     // Greater than
 ];
 
-// Maximum length for User-Agent header
-const MAX_USER_AGENT_LENGTH = 512;
+// Maximum length for User-Agent header (typical modern UAs can be long)
+const MAX_USER_AGENT_LENGTH = 1024;
+
+// Common benign User-Agent patterns to reduce false positives
+const benignUserAgents = [
+  /Mozilla\/5\.0/i,
+  /AppleWebKit\//i,
+  /Chrome\//i,
+  /Safari\//i,
+  /Firefox\//i,
+  /Edg\//i,
+  /OPR\//i
+];
+
+const isSuspiciousUA = (ua) => {
+  if (!ua) return false;
+  // If UA matches any benign pattern, treat as non-suspicious
+  if (benignUserAgents.some((re) => re.test(ua))) {
+    return false;
+  }
+  // Check for dangerous patterns
+  return dangerousPatterns.some((re) => re.test(ua));
+};
 
 export const validateUserAgent = (req, res, next) => {
   const userAgent = req.get('User-Agent');
@@ -49,37 +70,19 @@ export const validateUserAgent = (req, res, next) => {
     return next();
   }
   
-  // Check length
+  // Check length (only warn; don't block unless extreme)
   if (userAgent.length > MAX_USER_AGENT_LENGTH) {
-    console.warn(`Suspicious User-Agent: Length exceeds ${MAX_USER_AGENT_LENGTH} characters`);
-    return res.status(400).json({ 
+    console.warn(`User-Agent length exceeds ${MAX_USER_AGENT_LENGTH} characters (allowing, will monitor)`);
+  }
+
+  // Check for suspicious patterns (now using helper)
+  if (isSuspiciousUA(userAgent)) {
+    console.warn(`Suspicious User-Agent detected from ${req.ip}: ${userAgent.substring(0, 120)}...`);
+    return res.status(400).json({
       message: 'Invalid request headers',
-      error: 'User-Agent header too long'
+      error: 'Suspicious User-Agent detected'
     });
   }
-  
-  // Check for suspicious patterns
-  for (const pattern of suspiciousPatterns) {
-    if (pattern.test(userAgent)) {
-      console.warn(`Suspicious User-Agent detected: ${userAgent.substring(0, 100)}...`);
-      
-      // Log the attempt for security monitoring
-      console.warn(`Potential attack attempt from IP: ${req.ip}, User-Agent: ${userAgent}`);
-      
-      return res.status(400).json({ 
-        message: 'Invalid request headers',
-        error: 'Suspicious User-Agent detected'
-      });
-    }
-  }
-  
-  // Sanitize User-Agent by removing potentially dangerous characters
-  const sanitizedUserAgent = userAgent
-    .replace(/[<>\"'%;()&+]/g, '') // Remove dangerous characters
-    .substring(0, MAX_USER_AGENT_LENGTH); // Truncate if too long
-  
-  // Update the request with sanitized User-Agent
-  req.headers['user-agent'] = sanitizedUserAgent;
   
   next();
 };
@@ -101,18 +104,18 @@ export const userAgentRateLimit = (req, res, next) => {
   // Remove attempts older than 15 minutes
   const recentAttempts = attempts.filter(timestamp => now - timestamp < 15 * 60 * 1000);
   
-  // If more than 5 suspicious attempts in 15 minutes, block
-  if (recentAttempts.length >= 5) {
-    console.warn(`User-Agent fuzzing detected from IP: ${clientIP}`);
-    return res.status(429).json({ 
-      message: 'Too many suspicious requests',
-      error: 'Rate limit exceeded'
-    });
+  // Only count attempts when UA is actually suspicious
+  if (isSuspiciousUA(userAgent)) {
+    if (recentAttempts.length >= 5) {
+      console.warn(`User-Agent fuzzing detected from IP: ${clientIP}`);
+      return res.status(429).json({ 
+        message: 'Too many suspicious requests',
+        error: 'Rate limit exceeded'
+      });
+    }
+    recentAttempts.push(now);
+    global.userAgentAttempts.set(key, recentAttempts);
   }
-  
-  // Add current attempt
-  recentAttempts.push(now);
-  global.userAgentAttempts.set(key, recentAttempts);
   
   next();
 };

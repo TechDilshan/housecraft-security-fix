@@ -184,8 +184,21 @@ const csrfProtection = csurf({
   },
 });
 
-// Mount CSRF protection before routes
-app.use(csrfProtection);
+// Mount CSRF protection with route exclusions to prevent login/register failures
+const csrfExcludePaths = [
+  '/api/auth/csrf-token',
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/logout'
+];
+
+app.use((req, res, next) => {
+  // Skip CSRF for excluded paths and for safe methods
+  if (csrfExcludePaths.includes(req.path) || ['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+  return csrfProtection(req, res, next);
+});
 
 // Endpoint to provide CSRF token via readable cookie for Axios XSRF support
 app.get('/api/auth/csrf-token', (req, res) => {
