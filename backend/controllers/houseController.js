@@ -1,4 +1,5 @@
 import { House } from '../models/House.js';
+import { sanitizeHtmlFields, sanitizeText, sanitizeUrl } from '../middleware/xssProtectionMiddleware.js';
 
 // Get all houses
 export const getHouses = async (req, res) => {
