@@ -20,17 +20,25 @@ export const verifyToken = (token) => {
 // Protect routes
 export const protect = async (req, res, next) => {
   try {
+    // Skip CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
+
     let token;
 
     // Check for token in Authorization header
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
+    // Check for token in cookies
+    else if (req.cookies.token) {
+      token = req.cookies.token;
+    }
 
-    // If no token, return unauthorized
+    // If no token, return unauthorized (quietly)
     if (!token) {
-      console.log('No token provided in request');
-      return res.status(401).json({ message: 'Not authorized, no token' });
+      return res.status(401).json({ message: 'Authentication required' });
     }
 
     // Verify token
@@ -41,7 +49,7 @@ export const protect = async (req, res, next) => {
       // Check if token contains userId (our payload structure)
       if (!decoded.userId) {
         console.log('Token missing userId');
-        return res.status(401).json({ message: 'Not authorized, invalid token structure' });
+        return res.status(401).json({ message: 'Authentication failed' });
       }
       
       // Find user by id
@@ -49,7 +57,7 @@ export const protect = async (req, res, next) => {
       
       if (!user) {
         console.log('User not found with ID from token');
-        return res.status(401).json({ message: 'Not authorized, user not found' });
+        return res.status(401).json({ message: 'Authentication failed' });
       }
 
       // Add user to request object
@@ -57,7 +65,7 @@ export const protect = async (req, res, next) => {
       next();
     } catch (error) {
       console.error('Error verifying token:', error.message);
-      return res.status(401).json({ message: 'Not authorized, token verification failed' });
+      return res.status(401).json({ message: 'Authentication failed' });
     }
   } catch (error) {
     console.error('Unexpected error in auth middleware:', error);
