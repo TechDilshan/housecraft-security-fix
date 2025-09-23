@@ -57,12 +57,24 @@ export const getConsultationById = async (req, res) => {
       return res.status(404).json({ message: 'Consultation not found' });
     }
 
-    // Check if user is authorized to view this consultation
-    if (
-      consultation.userId.toString() !== req.user._id.toString() && 
-      consultation.professionalId.toString() !== req.user._id.toString() &&
-      req.user.role !== 'admin'
-    ) {
+    // Authorization: handle populated vs unpopulated ObjectIds safely
+    const consUserId = (consultation.userId && consultation.userId._id)
+      ? consultation.userId._id.toString()
+      : consultation.userId?.toString();
+    const consProfId = (consultation.professionalId && consultation.professionalId._id)
+      ? consultation.professionalId._id.toString()
+      : consultation.professionalId?.toString();
+    const reqUserId = req.user._id.toString();
+
+    const isParticipant = consUserId === reqUserId || consProfId === reqUserId;
+    if (!isParticipant && req.user.role !== 'admin') {
+      console.warn('Consultation view blocked', {
+        consultationId: consultation._id.toString(),
+        reqUser: reqUserId,
+        userId: consUserId,
+        professionalId: consProfId,
+        role: req.user.role
+      });
       return res.status(403).json({ message: 'Not authorized to view this consultation' });
     }
 

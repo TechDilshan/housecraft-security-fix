@@ -195,7 +195,11 @@ const csrfExcludePaths = [
 
 app.use((req, res, next) => {
   // Skip CSRF for excluded paths and for safe methods
-  if (csrfExcludePaths.includes(req.path) || ['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+  if (
+    csrfExcludePaths.includes(req.path) ||
+    req.path.startsWith('/api/consultations') ||
+    ['GET', 'HEAD', 'OPTIONS'].includes(req.method)
+  ) {
     return next();
   }
   return csrfProtection(req, res, next);
