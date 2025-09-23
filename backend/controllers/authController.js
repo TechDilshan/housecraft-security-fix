@@ -1,6 +1,8 @@
 
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
+import { asyncHandler } from '../middleware/errorMiddleware.js';
+import { sanitizeHtmlFields, sanitizeText } from '../middleware/xssProtectionMiddleware.js';
 
 // Helper function to generate JWT
 const generateToken = (userId) => {
@@ -10,79 +12,90 @@ const generateToken = (userId) => {
 };
 
 // Register new user
-export const register = async (req, res) => {
-  try {
-    const { fullName, email, phoneNumber, password, role } = req.body;
+export const register = asyncHandler(async (req, res) => {
+  const { fullName, email, phoneNumber, password, role } = req.body;
+  
+  // Sanitize user input to prevent XSS
+  const sanitizedFullName = sanitizeText(fullName);
+  const sanitizedEmail = sanitizeText(email);
+  const sanitizedPhoneNumber = sanitizeText(phoneNumber);
 
-    // Check if user already exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists with this email' });
-    }
-
-    // Create new user
-    const user = await User.create({
-      fullName,
-      email,
-      phoneNumber,
-      password,
-      role: role || 'user'  // Default to 'user' if role is not provided
-    });
-
-    // Generate token
-    const token = generateToken(user._id);
-
-    // Send response
-    res.status(201).json({
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      role: user.role,
-      profileImage: user.profileImage,
-      degree: user.degree,
-      token
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+  // Check if user already exists
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    return res.status(400).json({ message: 'User already exists with this email' });
   }
-};
+
+  // Create new user with sanitized data
+  const user = await User.create({
+    fullName: sanitizedFullName,
+    email: sanitizedEmail,
+    phoneNumber: sanitizedPhoneNumber,
+    password,
+    role: role || 'user'  // Default to 'user' if role is not provided
+  });
+
+  // Generate token
+  const token = generateToken(user._id);
+
+  // Set httpOnly cookie
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  });
+
+  // Send response (without token)
+  res.status(201).json({
+    _id: user._id,
+    fullName: user.fullName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    role: user.role,
+    profileImage: user.profileImage,
+    degree: user.degree
+  });
+});
 
 // Login user - updated to not require role
-export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+export const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
-    // Find user by email only - no role filter
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Generate token
-    const token = generateToken(user._id);
-
-    // Send response
-    res.json({
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      role: user.role,
-      profileImage: user.profileImage,
-      degree: user.degree,
-      token
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+  // Find user by email only - no role filter
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(401).json({ message: 'Authentication failed' });
   }
-};
+
+  // Check password
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    return res.status(401).json({ message: 'Authentication failed' });
+  }
+
+  // Generate token
+  const token = generateToken(user._id);
+
+  // Set httpOnly cookie
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  });
+
+  // Send response (without token)
+  res.json({
+    _id: user._id,
+    fullName: user.fullName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    role: user.role,
+    profileImage: user.profileImage,
+    degree: user.degree
+  });
+});
 
 // Get user profile
 export const getProfile = async (req, res) => {
@@ -123,17 +136,20 @@ export const updatePassword = async (req, res) => {
   }
 };
 
+// Logout user
+export const logout = asyncHandler(async (req, res) => {
+  res.clearCookie('token');
+  res.json({ message: 'Logged out successfully' });
+});
+
 // Delete account
-export const deleteAccount = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    await User.deleteOne({ _id: user._id });
-    res.json({ message: 'Account deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+export const deleteAccount = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
   }
-};
+  
+  await User.deleteOne({ _id: user._id });
+  res.clearCookie('token');
+  res.json({ message: 'Account deleted successfully' });
+});
